@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package com.timor.user.grpc;
+
+option java_package = "com.timor.user.grpc";
+option java_outer_classname = "AuthProto";
+
+import "google/protobuf/timestamp.proto";
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string name = 3;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+  google.protobuf.Timestamp lastLoginAt = 4;
+}
+
+message AuthToken {
+  string accessToken = 1;
+  string refreshToken = 2;
+}
+
+message AuthResponse {
+  User user = 1;
+  AuthToken authToken = 2;
+}
+
+message ApiResponse {
+  string message = 1;
+  AuthResponse data = 2;
+}
+
+service AuthService {
+  rpc Register(RegisterRequest) returns (ApiResponse);
+  rpc Login(LoginRequest) returns (ApiResponse);
+}

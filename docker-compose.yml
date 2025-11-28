@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    ports:
+      - "54321:5432"
+    environment:
+      - POSTGRES_DB=users
+      - POSTGRES_USER=test_user_rw
+      - POSTGRES_PASSWORD=test_user@pass01
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - user-network
+
+volumes:
+  postgres_data:
+
+networks:
+  user-network:
+    driver: bridge 

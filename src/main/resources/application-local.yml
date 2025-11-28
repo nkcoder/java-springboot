@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: user-service
+  docker:
+    compose:
+      enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.timor.user: DEBUG
+    org.springframework.security: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: INFO
+    com.zaxxer.hikari: INFO
+    com.zaxxer.hikari.HikariConfig: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

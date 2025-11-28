@@ -1,0 +1,41 @@
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/users
+      - SPRING_DATASOURCE_USERNAME=test_user_rw
+      - SPRING_DATASOURCE_PASSWORD=test_user@pass01
+      - JWT_ACCESS_SECRET=13483567-651e-410a-b79e-d4c1a66d3bd526b90300-0d1e-4d92-85e0-1747241d052d
+      - JWT_REFRESH_SECRET=8878f2cc-616e-413a-9b72-2eb32d7bf55c332df003-da39-45b7-82b1-f5f0d3203375
+      - CLIENT_URL=http://localhost:3000
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - user-network
+
+  postgres:
+    image: postgres:17.5-alpine
+    ports:
+      - "54321:5432"
+    environment:
+      - POSTGRES_DB=users
+      - POSTGRES_USER=test_user_rw
+      - POSTGRES_PASSWORD=test_user@pass01
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - user-network
+
+volumes:
+  postgres_data:
+
+networks:
+  user-network:
+    driver: bridge 
