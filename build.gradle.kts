@@ -1,3 +1,5 @@
+import com.google.protobuf.gradle.*
+
 plugins {
     id("org.springframework.boot") version "3.5.8"
     id("io.spring.dependency-management") version "1.1.7"
@@ -148,7 +150,7 @@ protobuf {
         artifact = "com.google.protobuf:protoc:4.33.1"
     }
     plugins {
-        create("grpc") {
+        id("grpc") {
             artifact = "io.grpc:protoc-gen-grpc-java:1.77.0"
         }
     }
