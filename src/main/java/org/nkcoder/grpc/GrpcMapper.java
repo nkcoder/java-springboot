@@ -10,37 +10,36 @@ import org.nkcoder.dto.auth.AuthTokens;
 import org.nkcoder.dto.user.UserResponse;
 
 public class GrpcMapper {
-    public static AuthProto.AuthResponse toAuthResponse(AuthResponse authResponse) {
-        UserResponse user = authResponse.user();
-        AuthTokens tokens = authResponse.tokens();
+  public static AuthProto.AuthResponse toAuthResponse(AuthResponse authResponse) {
+    UserResponse user = authResponse.user();
+    AuthTokens tokens = authResponse.tokens();
 
-        AuthProto.User grpcUser = AuthProto.User.newBuilder()
-                .setId(user.id().toString())
-                .setEmail(user.email())
-                .setName(user.name())
-                .setLastLoginAt(toTimestamp(user.lastLoginAt()))
-                .build();
+    AuthProto.User grpcUser =
+        AuthProto.User.newBuilder()
+            .setId(user.id().toString())
+            .setEmail(user.email())
+            .setName(user.name())
+            .setLastLoginAt(toTimestamp(user.lastLoginAt()))
+            .build();
 
-        AuthProto.AuthToken grpcTokens = AuthProto.AuthToken.newBuilder()
-                .setAccessToken(tokens.accessToken())
-                .setRefreshToken(tokens.refreshToken())
-                .build();
+    AuthProto.AuthToken grpcTokens =
+        AuthProto.AuthToken.newBuilder()
+            .setAccessToken(tokens.accessToken())
+            .setRefreshToken(tokens.refreshToken())
+            .build();
 
-        return AuthProto.AuthResponse.newBuilder()
-                .setUser(grpcUser)
-                .setAuthToken(grpcTokens)
-                .build();
+    return AuthProto.AuthResponse.newBuilder().setUser(grpcUser).setAuthToken(grpcTokens).build();
+  }
+
+  public static Timestamp toTimestamp(LocalDateTime dateTime) {
+    if (dateTime == null) {
+      return Timestamp.getDefaultInstance();
     }
+    Instant instant = dateTime.toInstant(ZoneOffset.UTC);
 
-    public static Timestamp toTimestamp(LocalDateTime dateTime) {
-        if (dateTime == null) {
-            return Timestamp.getDefaultInstance();
-        }
-        Instant instant = dateTime.toInstant(ZoneOffset.UTC);
-
-        return Timestamp.newBuilder()
-                .setSeconds(instant.getEpochSecond())
-                .setNanos(instant.getNano())
-                .build();
-    }
+    return Timestamp.newBuilder()
+        .setSeconds(instant.getEpochSecond())
+        .setNanos(instant.getNano())
+        .build();
+  }
 }

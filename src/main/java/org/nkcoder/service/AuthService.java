@@ -28,175 +28,181 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class AuthService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
-    private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
-    private final JwtProperties jwtProperties;
-    private final UserMapper userMapper;
-    private final UserService userService;
+  private final UserRepository userRepository;
+  private final RefreshTokenRepository refreshTokenRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final JwtUtil jwtUtil;
+  private final JwtProperties jwtProperties;
+  private final UserMapper userMapper;
+  private final UserService userService;
 
-    @Autowired
-    public AuthService(
-            UserRepository userRepository,
-            RefreshTokenRepository refreshTokenRepository,
-            PasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil,
-            JwtProperties jwtProperties,
-            UserMapper userMapper,
-            UserService userService) {
-        this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
-        this.jwtProperties = jwtProperties;
-        this.userMapper = userMapper;
-        this.userService = userService;
+  @Autowired
+  public AuthService(
+      UserRepository userRepository,
+      RefreshTokenRepository refreshTokenRepository,
+      PasswordEncoder passwordEncoder,
+      JwtUtil jwtUtil,
+      JwtProperties jwtProperties,
+      UserMapper userMapper,
+      UserService userService) {
+    this.userRepository = userRepository;
+    this.refreshTokenRepository = refreshTokenRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.jwtUtil = jwtUtil;
+    this.jwtProperties = jwtProperties;
+    this.userMapper = userMapper;
+    this.userService = userService;
+  }
+
+  public AuthResponse register(RegisterRequest request) {
+    logger.debug("Registering new user with email: {}", request.email());
+
+    // Check if user already exists
+    if (userRepository.existsByEmail(request.email().toLowerCase())) {
+      throw new ValidationException("User already exists");
     }
 
-    public AuthResponse register(RegisterRequest request) {
-        logger.debug("Registering new user with email: {}", request.email());
+    // Create new user
+    User user =
+        new User(
+            request.email().toLowerCase(),
+            passwordEncoder.encode(request.password()),
+            request.name(),
+            request.role(),
+            false);
 
-        // Check if user already exists
-        if (userRepository.existsByEmail(request.email().toLowerCase())) {
-            throw new ValidationException("User already exists");
-        }
+    User savedUser = userRepository.save(user);
+    logger.debug("User registered successfully with ID: {}", savedUser.getId());
 
-        // Create new user
-        User user = new User(
-                request.email().toLowerCase(),
-                passwordEncoder.encode(request.password()),
-                request.name(),
-                request.role(),
-                false);
+    // Generate tokens
+    String tokenFamily = UUID.randomUUID().toString();
+    AuthTokens tokens = generateAuthTokens(savedUser, tokenFamily);
 
-        User savedUser = userRepository.save(user);
-        logger.debug("User registered successfully with ID: {}", savedUser.getId());
+    // Save refresh token
+    saveRefreshToken(tokens.refreshToken(), savedUser.getId(), tokenFamily);
 
-        // Generate tokens
-        String tokenFamily = UUID.randomUUID().toString();
-        AuthTokens tokens = generateAuthTokens(savedUser, tokenFamily);
+    return new AuthResponse(userMapper.toResponse(savedUser), tokens);
+  }
 
-        // Save refresh token
-        saveRefreshToken(tokens.refreshToken(), savedUser.getId(), tokenFamily);
+  public AuthResponse login(LoginRequest request) {
+    logger.debug("Logging in user with email: {}", request.email());
 
-        return new AuthResponse(userMapper.toResponse(savedUser), tokens);
+    // Find user by email
+    User user =
+        userRepository
+            .findByEmail(request.email().toLowerCase())
+            .orElseThrow(() -> new AuthenticationException("Invalid email or password"));
+
+    // Check password
+    if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+      throw new AuthenticationException("Invalid email or password");
     }
 
-    public AuthResponse login(LoginRequest request) {
-        logger.debug("Logging in user with email: {}", request.email());
+    // Update last login
+    userService.updateLastLogin(user.getId());
 
-        // Find user by email
-        User user = userRepository
-                .findByEmail(request.email().toLowerCase())
-                .orElseThrow(() -> new AuthenticationException("Invalid email or password"));
+    // Generate tokens
+    String tokenFamily = UUID.randomUUID().toString();
+    AuthTokens tokens = generateAuthTokens(user, tokenFamily);
 
-        // Check password
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new AuthenticationException("Invalid email or password");
-        }
+    // Save refresh token
+    saveRefreshToken(tokens.refreshToken(), user.getId(), tokenFamily);
 
-        // Update last login
-        userService.updateLastLogin(user.getId());
+    logger.debug("User logged in successfully: {}", user.getId());
+    return new AuthResponse(userMapper.toResponse(user), tokens);
+  }
 
-        // Generate tokens
-        String tokenFamily = UUID.randomUUID().toString();
-        AuthTokens tokens = generateAuthTokens(user, tokenFamily);
+  public AuthResponse refreshTokens(String refreshToken) {
+    logger.debug("Refreshing tokens");
 
-        // Save refresh token
-        saveRefreshToken(tokens.refreshToken(), user.getId(), tokenFamily);
+    try {
+      // Validate refresh token
+      Claims claims = jwtUtil.validateRefreshToken(refreshToken);
+      UUID userId = UUID.fromString(claims.getSubject());
+      String tokenFamily = claims.get("tokenFamily", String.class);
 
-        logger.debug("User logged in successfully: {}", user.getId());
-        return new AuthResponse(userMapper.toResponse(user), tokens);
-    }
+      // Get stored refresh token
+      RefreshToken storedToken =
+          refreshTokenRepository
+              .findByToken(refreshToken)
+              .orElseThrow(() -> new AuthenticationException("Invalid refresh token"));
 
-    public AuthResponse refreshTokens(String refreshToken) {
-        logger.debug("Refreshing tokens");
-
-        try {
-            // Validate refresh token
-            Claims claims = jwtUtil.validateRefreshToken(refreshToken);
-            UUID userId = UUID.fromString(claims.getSubject());
-            String tokenFamily = claims.get("tokenFamily", String.class);
-
-            // Get stored refresh token
-            RefreshToken storedToken = refreshTokenRepository
-                    .findByToken(refreshToken)
-                    .orElseThrow(() -> new AuthenticationException("Invalid refresh token"));
-
-            // Check if token is expired
-            if (storedToken.isExpired()) {
-                refreshTokenRepository.deleteByToken(refreshToken);
-                throw new AuthenticationException("Refresh token expired");
-            }
-
-            // Get user
-            User user =
-                    userRepository.findById(userId).orElseThrow(() -> new AuthenticationException("User not found"));
-
-            // Delete old refresh token
-            refreshTokenRepository.deleteByToken(refreshToken);
-
-            // Generate new tokens with same token family
-            AuthTokens tokens = generateAuthTokens(user, tokenFamily);
-
-            // Save new refresh token
-            saveRefreshToken(tokens.refreshToken(), user.getId(), tokenFamily);
-
-            logger.debug("Tokens refreshed successfully for user: {}", userId);
-            return new AuthResponse(userMapper.toResponse(user), tokens);
-
-        } catch (JwtException e) {
-            logger.error("Invalid refresh token: {}", e.getMessage());
-
-            // If refresh token is invalid, try to delete the token family
-            refreshTokenRepository
-                    .findByToken(refreshToken)
-                    .ifPresent(storedToken -> refreshTokenRepository.deleteByTokenFamily(storedToken.getTokenFamily()));
-
-            throw new AuthenticationException("Invalid refresh token");
-        }
-    }
-
-    public void logout(String refreshToken) {
-        logger.debug("Logging out user (all devices)");
-
-        // Get token data
-        RefreshToken storedToken =
-                refreshTokenRepository.findByToken(refreshToken).orElse(null);
-        if (storedToken != null) {
-            // Delete entire token family (logout from all devices)
-            refreshTokenRepository.deleteByTokenFamily(storedToken.getTokenFamily());
-            logger.debug("Logged out from all devices for token family: {}", storedToken.getTokenFamily());
-        }
-    }
-
-    public void logoutSingle(String refreshToken) {
-        logger.debug("Logging out user (single device)");
-
-        // Delete only this refresh token (logout from current device)
+      // Check if token is expired
+      if (storedToken.isExpired()) {
         refreshTokenRepository.deleteByToken(refreshToken);
-        logger.debug("Logged out from current device");
-    }
+        throw new AuthenticationException("Refresh token expired");
+      }
 
-    private AuthTokens generateAuthTokens(User user, String tokenFamily) {
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), tokenFamily);
-        return new AuthTokens(accessToken, refreshToken);
-    }
+      // Get user
+      User user =
+          userRepository
+              .findById(userId)
+              .orElseThrow(() -> new AuthenticationException("User not found"));
 
-    private void saveRefreshToken(String token, UUID userId, String tokenFamily) {
-        LocalDateTime expiresAt =
-                jwtUtil.getTokenExpiry(jwtProperties.expiration().refresh());
-        RefreshToken refreshToken = new RefreshToken(token, tokenFamily, userId, expiresAt);
-        refreshTokenRepository.save(refreshToken);
-    }
+      // Delete old refresh token
+      refreshTokenRepository.deleteByToken(refreshToken);
 
-    @Transactional
-    public void cleanupExpiredTokens() {
-        logger.debug("Cleaning up expired refresh tokens");
-        refreshTokenRepository.deleteExpiredTokens(LocalDateTime.now());
+      // Generate new tokens with same token family
+      AuthTokens tokens = generateAuthTokens(user, tokenFamily);
+
+      // Save new refresh token
+      saveRefreshToken(tokens.refreshToken(), user.getId(), tokenFamily);
+
+      logger.debug("Tokens refreshed successfully for user: {}", userId);
+      return new AuthResponse(userMapper.toResponse(user), tokens);
+
+    } catch (JwtException e) {
+      logger.error("Invalid refresh token: {}", e.getMessage());
+
+      // If refresh token is invalid, try to delete the token family
+      refreshTokenRepository
+          .findByToken(refreshToken)
+          .ifPresent(
+              storedToken ->
+                  refreshTokenRepository.deleteByTokenFamily(storedToken.getTokenFamily()));
+
+      throw new AuthenticationException("Invalid refresh token");
     }
+  }
+
+  public void logout(String refreshToken) {
+    logger.debug("Logging out user (all devices)");
+
+    // Get token data
+    RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken).orElse(null);
+    if (storedToken != null) {
+      // Delete entire token family (logout from all devices)
+      refreshTokenRepository.deleteByTokenFamily(storedToken.getTokenFamily());
+      logger.debug(
+          "Logged out from all devices for token family: {}", storedToken.getTokenFamily());
+    }
+  }
+
+  public void logoutSingle(String refreshToken) {
+    logger.debug("Logging out user (single device)");
+
+    // Delete only this refresh token (logout from current device)
+    refreshTokenRepository.deleteByToken(refreshToken);
+    logger.debug("Logged out from current device");
+  }
+
+  private AuthTokens generateAuthTokens(User user, String tokenFamily) {
+    String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole());
+    String refreshToken = jwtUtil.generateRefreshToken(user.getId(), tokenFamily);
+    return new AuthTokens(accessToken, refreshToken);
+  }
+
+  private void saveRefreshToken(String token, UUID userId, String tokenFamily) {
+    LocalDateTime expiresAt = jwtUtil.getTokenExpiry(jwtProperties.expiration().refresh());
+    RefreshToken refreshToken = new RefreshToken(token, tokenFamily, userId, expiresAt);
+    refreshTokenRepository.save(refreshToken);
+  }
+
+  @Transactional
+  public void cleanupExpiredTokens() {
+    logger.debug("Cleaning up expired refresh tokens");
+    refreshTokenRepository.deleteExpiredTokens(LocalDateTime.now());
+  }
 }

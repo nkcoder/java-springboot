@@ -13,31 +13,33 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @TestConfiguration
 public class TestConfig {
-    @Bean
-    @Primary
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .setPropertyNamingStrategy((PropertyNamingStrategies.LOWER_CAMEL_CASE));
-    }
+  @Bean
+  @Primary
+  public ObjectMapper objectMapper() {
+    return new ObjectMapper()
+        .registerModule(new JavaTimeModule())
+        .setPropertyNamingStrategy((PropertyNamingStrategies.LOWER_CAMEL_CASE));
+  }
 
-    @TestConfiguration
-    @EnableWebSecurity
-    public static class TestSecurityConfig {
-        @Bean
-        public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
-            return http.csrf(AbstractHttpConfigurer::disable)
-                    .authorizeHttpRequests(authorize -> authorize
-                            .requestMatchers(
-                                    "/api/users/auth/register",
-                                    "/api/users/auth/login",
-                                    "/api/users/auth/refresh",
-                                    "/api/users/auth/logout",
-                                    "/api/users/auth/logout-single")
-                            .permitAll()
-                            .anyRequest()
-                            .authenticated())
-                    .build();
-        }
+  @TestConfiguration
+  @EnableWebSecurity
+  public static class TestSecurityConfig {
+    @Bean
+    public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
+      return http.csrf(AbstractHttpConfigurer::disable)
+          .authorizeHttpRequests(
+              authorize ->
+                  authorize
+                      .requestMatchers(
+                          "/api/users/auth/register",
+                          "/api/users/auth/login",
+                          "/api/users/auth/refresh",
+                          "/api/users/auth/logout",
+                          "/api/users/auth/logout-single")
+                      .permitAll()
+                      .anyRequest()
+                      .authenticated())
+          .build();
     }
+  }
 }

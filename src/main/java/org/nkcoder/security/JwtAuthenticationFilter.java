@@ -29,64 +29,65 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+  private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    private final JwtUtil jwtUtil;
+  private final JwtUtil jwtUtil;
 
-    @Autowired
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
+  @Autowired
+  public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    this.jwtUtil = jwtUtil;
+  }
+
+  @Override
+  protected void doFilterInternal(
+      @NotNull HttpServletRequest request,
+      @NotNull HttpServletResponse response,
+      @NotNull FilterChain filterChain)
+      throws ServletException, IOException {
+    logger.debug("Processing authentication for request: {}", request.getRequestURI());
+
+    try {
+      String jwt = getJwtFromRequest(request);
+
+      if (StringUtils.hasText(jwt) && !jwtUtil.isTokenExpired(jwt)) {
+        Claims claims = jwtUtil.validateAccessToken(jwt);
+
+        UUID userId = UUID.fromString(claims.getSubject());
+        String email = claims.get("email", String.class);
+        String roleString = claims.get("role", String.class);
+        Role role = Role.valueOf(roleString);
+
+        // Create authorities
+        List<GrantedAuthority> authorities =
+            List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+
+        UserDetails userDetails = new User(email, "", authorities);
+        UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        // Set custom attributes
+        request.setAttribute("userId", userId);
+        request.setAttribute("email", email);
+        request.setAttribute("role", role);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        logger.debug("Set authentication for user: {}", email);
+      }
+    } catch (JwtException e) {
+      logger.error("Cannot set user authentication: {}", e.getMessage());
     }
 
-    @Override
-    protected void doFilterInternal(
-            @NotNull HttpServletRequest request,
-            @NotNull HttpServletResponse response,
-            @NotNull FilterChain filterChain)
-            throws ServletException, IOException {
-        logger.debug("Processing authentication for request: {}", request.getRequestURI());
+    filterChain.doFilter(request, response);
+  }
 
-        try {
-            String jwt = getJwtFromRequest(request);
-
-            if (StringUtils.hasText(jwt) && !jwtUtil.isTokenExpired(jwt)) {
-                Claims claims = jwtUtil.validateAccessToken(jwt);
-
-                UUID userId = UUID.fromString(claims.getSubject());
-                String email = claims.get("email", String.class);
-                String roleString = claims.get("role", String.class);
-                Role role = Role.valueOf(roleString);
-
-                // Create authorities
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
-
-                UserDetails userDetails = new User(email, "", authorities);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
-
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // Set custom attributes
-                request.setAttribute("userId", userId);
-                request.setAttribute("email", email);
-                request.setAttribute("role", role);
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                logger.debug("Set authentication for user: {}", email);
-            }
-        } catch (JwtException e) {
-            logger.error("Cannot set user authentication: {}", e.getMessage());
-        }
-
-        filterChain.doFilter(request, response);
+  private String getJwtFromRequest(HttpServletRequest request) {
+    String bearerToken = request.getHeader("Authorization");
+    if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+      return bearerToken.substring(7);
     }
-
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
-    }
+    return null;
+  }
 }

@@ -10,13 +10,11 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest
 @Import({TestConfig.class, TestConfig.TestSecurityConfig.class})
 public class BaseSecurityControllerTest {
-    @Autowired
-    protected MockMvc mockMvc;
+  @Autowired protected MockMvc mockMvc;
 
-    @Autowired
-    protected ObjectMapper objectMapper;
+  @Autowired protected ObjectMapper objectMapper;
 
-    protected String toJson(Object object) throws Exception {
-        return objectMapper.writeValueAsString(object);
-    }
+  protected String toJson(Object object) throws Exception {
+    return objectMapper.writeValueAsString(object);
+  }
 }

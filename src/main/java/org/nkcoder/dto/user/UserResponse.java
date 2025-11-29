@@ -5,11 +5,11 @@ import java.util.UUID;
 import org.nkcoder.enums.Role;
 
 public record UserResponse(
-        UUID id,
-        String email,
-        String name,
-        Role role,
-        Boolean isEmailVerified,
-        LocalDateTime lastLoginAt,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt) {}
+    UUID id,
+    String email,
+    String name,
+    Role role,
+    Boolean isEmailVerified,
+    LocalDateTime lastLoginAt,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt) {}

@@ -15,68 +15,75 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @GrpcService
 public class AuthGrpcService extends AuthServiceGrpc.AuthServiceImplBase {
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(AuthGrpcService.class);
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger(AuthGrpcService.class);
 
-    private final AuthService authService;
+  private final AuthService authService;
 
-    @Autowired
-    public AuthGrpcService(AuthService authService) {
-        this.authService = authService;
+  @Autowired
+  public AuthGrpcService(AuthService authService) {
+    this.authService = authService;
+  }
+
+  @Override
+  public void register(
+      AuthProto.RegisterRequest request, StreamObserver<AuthProto.ApiResponse> responseObserver) {
+    logger.info("Received registration request for email: {}", request.getEmail());
+
+    if (request.getEmail().isEmpty()
+        || request.getPassword().isEmpty()
+        || request.getName().isEmpty()) {
+      logger.error("Invalid registration request: email, password, and username must not be empty");
+      responseObserver.onError(
+          Status.INVALID_ARGUMENT
+              .withDescription("Email, password, and username must not be empty")
+              .asRuntimeException());
+      return;
     }
 
-    @Override
-    public void register(AuthProto.RegisterRequest request, StreamObserver<AuthProto.ApiResponse> responseObserver) {
-        logger.info("Received registration request for email: {}", request.getEmail());
+    RegisterRequest registerRequest =
+        new RegisterRequest(
+            request.getEmail(), request.getPassword(), request.getName(), Role.MEMBER);
 
-        if (request.getEmail().isEmpty()
-                || request.getPassword().isEmpty()
-                || request.getName().isEmpty()) {
-            logger.error("Invalid registration request: email, password, and username must not be empty");
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    .withDescription("Email, password, and username must not be empty")
-                    .asRuntimeException());
-            return;
-        }
+    AuthResponse response = authService.register(registerRequest);
 
-        RegisterRequest registerRequest =
-                new RegisterRequest(request.getEmail(), request.getPassword(), request.getName(), Role.MEMBER);
+    logger.info("auth response: {}", response);
 
-        AuthResponse response = authService.register(registerRequest);
+    var grpcResponse = GrpcMapper.toAuthResponse(response);
+    var apiResponse =
+        AuthProto.ApiResponse.newBuilder()
+            .setMessage("User registered successfully")
+            .setData(grpcResponse)
+            .build();
 
-        logger.info("auth response: {}", response);
+    responseObserver.onNext(apiResponse);
+    responseObserver.onCompleted();
+  }
 
-        var grpcResponse = GrpcMapper.toAuthResponse(response);
-        var apiResponse = AuthProto.ApiResponse.newBuilder()
-                .setMessage("User registered successfully")
-                .setData(grpcResponse)
-                .build();
+  @Override
+  public void login(
+      AuthProto.LoginRequest request, StreamObserver<AuthProto.ApiResponse> responseObserver) {
+    logger.info("Received login request for email: {}", request.getEmail());
 
-        responseObserver.onNext(apiResponse);
-        responseObserver.onCompleted();
+    if (request.getEmail().isEmpty() || request.getPassword().isEmpty()) {
+      logger.error("Invalid login request: email and password must not be empty");
+      responseObserver.onError(
+          Status.INVALID_ARGUMENT
+              .withDescription("Email and password must not be empty")
+              .asRuntimeException());
+      return;
     }
 
-    @Override
-    public void login(AuthProto.LoginRequest request, StreamObserver<AuthProto.ApiResponse> responseObserver) {
-        logger.info("Received login request for email: {}", request.getEmail());
+    LoginRequest loginRequest = new LoginRequest(request.getEmail(), request.getPassword());
+    AuthResponse response = authService.login(loginRequest);
 
-        if (request.getEmail().isEmpty() || request.getPassword().isEmpty()) {
-            logger.error("Invalid login request: email and password must not be empty");
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    .withDescription("Email and password must not be empty")
-                    .asRuntimeException());
-            return;
-        }
+    var grpcResponse = GrpcMapper.toAuthResponse(response);
+    var apiResponse =
+        AuthProto.ApiResponse.newBuilder()
+            .setMessage("User logged in successfully")
+            .setData(grpcResponse)
+            .build();
 
-        LoginRequest loginRequest = new LoginRequest(request.getEmail(), request.getPassword());
-        AuthResponse response = authService.login(loginRequest);
-
-        var grpcResponse = GrpcMapper.toAuthResponse(response);
-        var apiResponse = AuthProto.ApiResponse.newBuilder()
-                .setMessage("User logged in successfully")
-                .setData(grpcResponse)
-                .build();
-
-        responseObserver.onNext(apiResponse);
-        responseObserver.onCompleted();
-    }
+    responseObserver.onNext(apiResponse);
+    responseObserver.onCompleted();
+  }
 }

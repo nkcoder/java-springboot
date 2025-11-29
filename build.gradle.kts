@@ -130,7 +130,10 @@ spotless {
     java {
         importOrder()
         removeUnusedImports()
-        palantirJavaFormat("2.70.0").formatJavadoc(true)
+
+        // Choose one formatters: google or palantir
+        googleJavaFormat("1.32.0").reflowLongStrings().formatJavadoc(true)
+
         leadingTabsToSpaces(1)
         formatAnnotations()
         trimTrailingWhitespace()

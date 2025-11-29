@@ -9,13 +9,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthController {
 
-    @GetMapping("/health")
-    public ResponseEntity<Map<String, Object>> health() {
-        Map<String, Object> response = Map.of(
-                "status", "ok",
-                "timestamp", LocalDateTime.now(),
-                "service", "user-service");
+  @GetMapping("/health")
+  public ResponseEntity<Map<String, Object>> health() {
+    Map<String, Object> response =
+        Map.of(
+            "status", "ok",
+            "timestamp", LocalDateTime.now(),
+            "service", "user-service");
 
-        return ResponseEntity.ok(response);
-    }
+    return ResponseEntity.ok(response);
+  }
 }

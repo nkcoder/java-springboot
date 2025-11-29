@@ -18,27 +18,25 @@ import org.springframework.test.web.servlet.MockMvc;
 @DisplayName("AuthController Security Tests")
 @ActiveProfiles("test")
 public class AuthControllerSecurityTest extends BaseSecurityControllerTest {
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+  @Autowired private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private AuthService authService;
+  @MockitoBean private AuthService authService;
 
-    @MockitoBean
-    private JwtUtil jwtUtil;
+  @MockitoBean private JwtUtil jwtUtil;
 
-    @Test
-    @DisplayName("Should allow access to public endpoints without authentication")
-    void shouldAllowPublicEndpointsWithoutAuth() throws Exception {
-        // Register endpoint should be accessible without authentication
-        mockMvc.perform(get("/api/users/auth/register"))
-                .andExpect(status().isMethodNotAllowed()); // POST expected, but no 401/403
+  @Test
+  @DisplayName("Should allow access to public endpoints without authentication")
+  void shouldAllowPublicEndpointsWithoutAuth() throws Exception {
+    // Register endpoint should be accessible without authentication
+    mockMvc
+        .perform(get("/api/users/auth/register"))
+        .andExpect(status().isMethodNotAllowed()); // POST expected, but no 401/403
 
-        // Login endpoint should be accessible without authentication
-        mockMvc.perform(get("/api/users/auth/login"))
-                .andExpect(status().isMethodNotAllowed()); // POST expected, but no 401/403
-    }
+    // Login endpoint should be accessible without authentication
+    mockMvc
+        .perform(get("/api/users/auth/login"))
+        .andExpect(status().isMethodNotAllowed()); // POST expected, but no 401/403
+  }
 }

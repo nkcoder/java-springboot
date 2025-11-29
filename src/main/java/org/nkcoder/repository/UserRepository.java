@@ -13,14 +13,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    Optional<User> findByEmail(String email);
+  Optional<User> findByEmail(String email);
 
-    boolean existsByEmail(String email);
+  boolean existsByEmail(String email);
 
-    @Modifying
-    @Query("UPDATE User u SET u.lastLoginAt = :lastLoginAt WHERE u.id = :id")
-    void updateLastLoginAt(@Param("id") UUID id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
+  @Modifying
+  @Query("UPDATE User u SET u.lastLoginAt = :lastLoginAt WHERE u.id = :id")
+  void updateLastLoginAt(@Param("id") UUID id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
 
-    @Query("SELECT u FROM User u WHERE u.email = :email AND u.id != :excludeId")
-    Optional<User> findByEmailExcludingId(@Param("email") String email, @Param("excludeId") UUID excludeId);
+  @Query("SELECT u FROM User u WHERE u.email = :email AND u.id != :excludeId")
+  Optional<User> findByEmailExcludingId(
+      @Param("email") String email, @Param("excludeId") UUID excludeId);
 }

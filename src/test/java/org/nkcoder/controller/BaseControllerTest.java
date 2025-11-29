@@ -13,13 +13,11 @@ import org.springframework.test.web.servlet.MockMvc;
 @Import(TestConfig.class)
 @ImportAutoConfiguration(exclude = {JpaAuditingConfig.class})
 public class BaseControllerTest {
-    @Autowired
-    protected ObjectMapper objectMapper;
+  @Autowired protected ObjectMapper objectMapper;
 
-    @Autowired
-    protected MockMvc mockMvc;
+  @Autowired protected MockMvc mockMvc;
 
-    protected String toJson(Object object) throws Exception {
-        return objectMapper.writeValueAsString(object);
-    }
+  protected String toJson(Object object) throws Exception {
+    return objectMapper.writeValueAsString(object);
+  }
 }

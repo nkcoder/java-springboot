@@ -16,29 +16,32 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
+  private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
 
-    private final ObjectMapper objectMapper;
+  private final ObjectMapper objectMapper;
 
-    @Autowired
-    public JwtAuthenticationEntryPoint(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
+  @Autowired
+  public JwtAuthenticationEntryPoint(ObjectMapper objectMapper) {
+    this.objectMapper = objectMapper;
+  }
 
-    @Override
-    public void commence(
-            HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
-            throws IOException, ServletException {
+  @Override
+  public void commence(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      AuthenticationException authException)
+      throws IOException, ServletException {
 
-        logger.error("Unauthorized error: {}", authException.getMessage());
+    logger.error("Unauthorized error: {}", authException.getMessage());
 
-        response.setContentType("application/json");
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setContentType("application/json");
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-        ApiResponse<Object> apiResponse = ApiResponse.error("Unauthorized: " + authException.getMessage());
+    ApiResponse<Object> apiResponse =
+        ApiResponse.error("Unauthorized: " + authException.getMessage());
 
-        objectMapper.writeValue(response.getOutputStream(), apiResponse);
-        response.getOutputStream().flush();
-        response.getOutputStream().close();
-    }
+    objectMapper.writeValue(response.getOutputStream(), apiResponse);
+    response.getOutputStream().flush();
+    response.getOutputStream().close();
+  }
 }
