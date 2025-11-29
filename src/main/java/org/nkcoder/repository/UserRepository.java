@@ -19,7 +19,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
   @Modifying
   @Query("UPDATE User u SET u.lastLoginAt = :lastLoginAt WHERE u.id = :id")
-  void updateLastLoginAt(@Param("id") UUID id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
+  int updateLastLoginAt(@Param("id") UUID id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
 
   @Query("SELECT u FROM User u WHERE u.email = :email AND u.id != :excludeId")
   Optional<User> findByEmailExcludingId(

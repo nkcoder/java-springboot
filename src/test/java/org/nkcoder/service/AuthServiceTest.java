@@ -51,8 +51,6 @@ class AuthServiceTest {
 
   @Mock private UserMapper userMapper;
 
-  @Mock private UserService userService;
-
   @InjectMocks private AuthService authService;
 
   @Captor private ArgumentCaptor<RefreshToken> refreshTokenCaptor;
@@ -135,7 +133,6 @@ class AuthServiceTest {
     assertEquals(userResponse, response.user());
     assertEquals(accessToken, response.tokens().accessToken());
     assertEquals(refreshToken, response.tokens().refreshToken());
-    verify(userService).updateLastLogin(userId);
     verify(refreshTokenRepository).save(any(RefreshToken.class));
   }
 
@@ -148,7 +145,7 @@ class AuthServiceTest {
         assertThrows(AuthenticationException.class, () -> authService.login(request));
 
     assertEquals("Invalid email or password", exception.getMessage());
-    verify(userService, never()).updateLastLogin(any());
+    verify(userRepository, never()).updateLastLoginAt(any(), any());
   }
 
   @Test
@@ -163,7 +160,7 @@ class AuthServiceTest {
         assertThrows(AuthenticationException.class, () -> authService.login(request));
 
     assertEquals("Invalid email or password", exception.getMessage());
-    verify(userService, never()).updateLastLogin(any());
+    verify(userRepository, never()).updateLastLoginAt(any(), any());
   }
 
   @Test
@@ -175,7 +172,8 @@ class AuthServiceTest {
     when(jwtUtil.validateRefreshToken(refreshToken)).thenReturn(claims);
 
     RefreshToken storedToken = mock(RefreshToken.class);
-    when(refreshTokenRepository.findByToken(refreshToken)).thenReturn(Optional.of(storedToken));
+    when(refreshTokenRepository.findByTokenForUpdate(refreshToken))
+        .thenReturn(Optional.of(storedToken));
     when(storedToken.isExpired()).thenReturn(false);
     when(storedToken.getTokenFamily()).thenReturn(tokenFamily);
 
@@ -204,7 +202,8 @@ class AuthServiceTest {
     when(jwtUtil.validateRefreshToken(refreshToken)).thenReturn(claims);
 
     RefreshToken storedToken = mock(RefreshToken.class);
-    when(refreshTokenRepository.findByToken(refreshToken)).thenReturn(Optional.of(storedToken));
+    when(refreshTokenRepository.findByTokenForUpdate(refreshToken))
+        .thenReturn(Optional.of(storedToken));
     when(storedToken.isExpired()).thenReturn(true);
 
     AuthenticationException exception =
@@ -247,7 +246,7 @@ class AuthServiceTest {
     when(claims.get("tokenFamily", String.class)).thenReturn(tokenFamily);
 
     when(jwtUtil.validateRefreshToken(refreshToken)).thenReturn(claims);
-    when(refreshTokenRepository.findByToken(refreshToken)).thenReturn(Optional.empty());
+    when(refreshTokenRepository.findByTokenForUpdate(refreshToken)).thenReturn(Optional.empty());
 
     AuthenticationException exception =
         assertThrows(AuthenticationException.class, () -> authService.refreshTokens(refreshToken));
@@ -265,7 +264,8 @@ class AuthServiceTest {
     when(jwtUtil.validateRefreshToken(refreshToken)).thenReturn(claims);
 
     RefreshToken storedToken = mock(RefreshToken.class);
-    when(refreshTokenRepository.findByToken(refreshToken)).thenReturn(Optional.of(storedToken));
+    when(refreshTokenRepository.findByTokenForUpdate(refreshToken))
+        .thenReturn(Optional.of(storedToken));
     when(storedToken.isExpired()).thenReturn(false);
 
     when(userRepository.findById(userId)).thenReturn(Optional.empty());

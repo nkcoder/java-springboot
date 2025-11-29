@@ -1,6 +1,7 @@
 package org.nkcoder.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import org.nkcoder.dto.user.ChangePasswordRequest;
 import org.nkcoder.dto.user.UpdateProfileRequest;
@@ -19,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
-@Transactional
 public class UserService {
 
   private static final Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -57,6 +57,7 @@ public class UserService {
     return userMapper.toResponse(user);
   }
 
+  @Transactional
   public UserResponse updateProfile(UUID userId, UpdateProfileRequest request) {
     logger.debug("Updating profile for user: {}", userId);
 
@@ -65,18 +66,18 @@ public class UserService {
             .findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-    // Validate email uniqueness if email is being updated
-    if (StringUtils.hasText(request.email()) && !request.email().equals(user.getEmail())) {
-      if (userRepository.existsByEmail(request.email().toLowerCase())) {
-        throw new ValidationException("Email already exists");
-      }
-      user.updateEmail(request.email());
-    }
+    Optional.ofNullable(request.email())
+        .filter(StringUtils::hasText)
+        .filter(email -> !email.equals(user.getEmail()))
+        .ifPresent(
+            email -> {
+              if (userRepository.existsByEmail(email.toLowerCase())) {
+                throw new ValidationException("Email already exists");
+              }
+              user.updateEmail(email);
+            });
 
-    // Update name if provided
-    if (StringUtils.hasText(request.name())) {
-      user.updateName(request.name());
-    }
+    Optional.ofNullable(request.name()).filter(StringUtils::hasText).ifPresent(user::updateName);
 
     User updatedUser = userRepository.save(user);
     logger.debug("Profile updated successfully for user: {}", userId);
@@ -84,6 +85,7 @@ public class UserService {
     return userMapper.toResponse(updatedUser);
   }
 
+  @Transactional
   public void changePassword(UUID userId, ChangePasswordRequest request) {
     logger.debug("Changing password for user: {}", userId);
 
@@ -104,12 +106,13 @@ public class UserService {
     logger.debug("Password changed successfully for user: {}", userId);
   }
 
+  @Transactional
   public void updateLastLogin(UUID userId) {
     logger.debug("Updating last login for user: {}", userId);
     userRepository.updateLastLoginAt(userId, LocalDateTime.now());
   }
 
-  // Admin can change any user's password
+  @Transactional
   public void changeUserPassword(UUID userId, String newPassword) {
     User user =
         userRepository

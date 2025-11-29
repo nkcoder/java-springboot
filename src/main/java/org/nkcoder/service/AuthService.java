@@ -22,10 +22,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 public class AuthService {
 
   private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
@@ -36,7 +36,6 @@ public class AuthService {
   private final JwtUtil jwtUtil;
   private final JwtProperties jwtProperties;
   private final UserMapper userMapper;
-  private final UserService userService;
 
   @Autowired
   public AuthService(
@@ -45,17 +44,16 @@ public class AuthService {
       PasswordEncoder passwordEncoder,
       JwtUtil jwtUtil,
       JwtProperties jwtProperties,
-      UserMapper userMapper,
-      UserService userService) {
+      UserMapper userMapper) {
     this.userRepository = userRepository;
     this.refreshTokenRepository = refreshTokenRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtUtil = jwtUtil;
     this.jwtProperties = jwtProperties;
     this.userMapper = userMapper;
-    this.userService = userService;
   }
 
+  @Transactional
   public AuthResponse register(RegisterRequest request) {
     logger.debug("Registering new user with email: {}", request.email());
 
@@ -86,6 +84,7 @@ public class AuthService {
     return new AuthResponse(userMapper.toResponse(savedUser), tokens);
   }
 
+  @Transactional
   public AuthResponse login(LoginRequest request) {
     logger.debug("Logging in user with email: {}", request.email());
 
@@ -101,7 +100,7 @@ public class AuthService {
     }
 
     // Update last login
-    userService.updateLastLogin(user.getId());
+    userRepository.updateLastLoginAt(user.getId(), LocalDateTime.now());
 
     // Generate tokens
     String tokenFamily = UUID.randomUUID().toString();
@@ -114,6 +113,7 @@ public class AuthService {
     return new AuthResponse(userMapper.toResponse(user), tokens);
   }
 
+  @Transactional(isolation = Isolation.SERIALIZABLE)
   public AuthResponse refreshTokens(String refreshToken) {
     logger.debug("Refreshing tokens");
 
@@ -126,7 +126,7 @@ public class AuthService {
       // Get stored refresh token
       RefreshToken storedToken =
           refreshTokenRepository
-              .findByToken(refreshToken)
+              .findByTokenForUpdate(refreshToken)
               .orElseThrow(() -> new AuthenticationException("Invalid refresh token"));
 
       // Check if token is expired
@@ -167,6 +167,7 @@ public class AuthService {
     }
   }
 
+  @Transactional
   public void logout(String refreshToken) {
     logger.debug("Logging out user (all devices)");
 
@@ -180,6 +181,7 @@ public class AuthService {
     }
   }
 
+  @Transactional
   public void logoutSingle(String refreshToken) {
     logger.debug("Logging out user (single device)");
 
