@@ -87,22 +87,17 @@ public class UserService {
   public void changePassword(UUID userId, ChangePasswordRequest request) {
     logger.debug("Changing password for user: {}", userId);
 
-    // Validate password confirmation
-    if (!request.newPassword().equals(request.confirmPassword())) {
-      throw new ValidationException("New password and confirmation password do not match");
-    }
-
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-    // Validate current password
+    // Password confirmation if now validated by @PasswordMatch annotation
+
     if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
       throw new ValidationException("Current password is incorrect");
     }
 
-    // Update password
     user.changePassword(passwordEncoder.encode(request.newPassword()));
     userRepository.save(user);
 

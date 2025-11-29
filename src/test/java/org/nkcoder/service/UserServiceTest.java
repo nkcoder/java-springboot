@@ -177,7 +177,10 @@ class UserServiceTest {
   }
 
   @Test
-  void changePassword_passwordsDoNotMatch_throws() {
+  void changePassword_currentPasswordsDoNotMatch_throws() {
+    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
     ChangePasswordRequest request = new ChangePasswordRequest("oldPass", "newPass", "different");
     assertThrows(ValidationException.class, () -> userService.changePassword(userId, request));
   }
