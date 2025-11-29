@@ -65,12 +65,12 @@ public class UserService {
             if (userRepository.existsByEmail(request.email().toLowerCase())) {
                 throw new ValidationException("Email already exists");
             }
-            user.setEmail(request.email().toLowerCase());
+            user.updateEmail(request.email());
         }
 
         // Update name if provided
         if (StringUtils.hasText(request.name())) {
-            user.setName(request.name());
+            user.updateName(request.name());
         }
 
         User updatedUser = userRepository.save(user);
@@ -97,7 +97,7 @@ public class UserService {
         }
 
         // Update password
-        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
 
         logger.debug("Password changed successfully for user: {}", userId);
@@ -115,7 +115,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         // Update password
-        user.setPassword(passwordEncoder.encode(newPassword));
+        user.changePassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
 }

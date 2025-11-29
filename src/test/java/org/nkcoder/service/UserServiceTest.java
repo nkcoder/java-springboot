@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -16,6 +17,7 @@ import org.nkcoder.dto.user.ChangePasswordRequest;
 import org.nkcoder.dto.user.UpdateProfileRequest;
 import org.nkcoder.dto.user.UserResponse;
 import org.nkcoder.entity.User;
+import org.nkcoder.entity.UserTestFactory;
 import org.nkcoder.enums.Role;
 import org.nkcoder.exception.ResourceNotFoundException;
 import org.nkcoder.exception.ValidationException;
@@ -40,20 +42,25 @@ class UserServiceTest {
     private final UUID userId = UUID.randomUUID();
     private final String email = "user@example.com";
     private final String name = "User Name";
-    private final String password = "password";
     private final String encodedPassword = "encodedPassword";
     private final Role role = Role.MEMBER;
     private final LocalDateTime now = LocalDateTime.now();
 
+    AutoCloseable closeable;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        closeable.close();
     }
 
     @Test
     void findById_success() {
-        User user = new User(email, encodedPassword, name, role, false);
-        user.setId(userId);
+        User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
         UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -74,8 +81,7 @@ class UserServiceTest {
 
     @Test
     void findByEmail_success() {
-        User user = new User(email, encodedPassword, name, role, false);
-        user.setId(userId);
+        User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
         UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
 
         when(userRepository.findByEmail(email.toLowerCase())).thenReturn(Optional.of(user));
@@ -96,11 +102,10 @@ class UserServiceTest {
 
     @Test
     void updateProfile_success_updateNameAndEmail() {
-        User user = new User(email, encodedPassword, name, role, false);
-        user.setId(userId);
+        User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
         UpdateProfileRequest request = new UpdateProfileRequest("new@example.com", "New Name");
-        User updatedUser = new User("new@example.com", encodedPassword, "New Name", role, false);
-        updatedUser.setId(userId);
+        User updatedUser =
+                UserTestFactory.createWithId(userId, "new@example.com", encodedPassword, "New Name", role, false);
         UserResponse userResponse = new UserResponse(userId, "new@example.com", "New Name", role, false, now, now, now);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -119,8 +124,7 @@ class UserServiceTest {
 
     @Test
     void updateProfile_emailExists_throws() {
-        User user = new User(email, encodedPassword, name, role, false);
-        user.setId(userId);
+        User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
         UpdateProfileRequest request = new UpdateProfileRequest("existing@example.com", "New Name");
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -131,11 +135,9 @@ class UserServiceTest {
 
     @Test
     void updateProfile_updateNameOnly() {
-        User user = new User(email, encodedPassword, name, role, false);
-        user.setId(userId);
+        User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
         UpdateProfileRequest request = new UpdateProfileRequest(null, "Updated Name");
-        User updatedUser = new User(email, encodedPassword, "Updated Name", role, false);
-        updatedUser.setId(userId);
+        User updatedUser = UserTestFactory.createWithId(userId, email, encodedPassword, "Updated Name", role, false);
         UserResponse userResponse = new UserResponse(userId, email, "Updated Name", role, false, now, now, now);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -159,8 +161,7 @@ class UserServiceTest {
     @Test
     void changePassword_success() {
         ChangePasswordRequest request = new ChangePasswordRequest("oldPass", "newPass", "newPass");
-        User user = new User(email, encodedPassword, name, role, false);
-        user.setId(userId);
+        User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("oldPass", encodedPassword)).thenReturn(true);
@@ -187,8 +188,7 @@ class UserServiceTest {
     @Test
     void changePassword_currentPasswordIncorrect_throws() {
         ChangePasswordRequest request = new ChangePasswordRequest("oldPass", "newPass", "newPass");
-        User user = new User(email, encodedPassword, name, role, false);
-        user.setId(userId);
+        User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("oldPass", encodedPassword)).thenReturn(false);
@@ -204,8 +204,7 @@ class UserServiceTest {
 
     @Test
     void changeUserPassword_success() {
-        User user = new User(email, encodedPassword, name, role, false);
-        user.setId(userId);
+        User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(passwordEncoder.encode("adminNewPass")).thenReturn("encodedAdminPass");

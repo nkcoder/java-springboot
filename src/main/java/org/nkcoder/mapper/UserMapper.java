@@ -17,7 +17,7 @@ public class UserMapper {
                 user.getEmail(),
                 user.getName(),
                 user.getRole(),
-                user.getIsEmailVerified(),
+                user.emailVerified(),
                 user.getLastLoginAt(),
                 user.getCreatedAt(),
                 user.getUpdatedAt());

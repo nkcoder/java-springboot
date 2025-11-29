@@ -45,9 +45,9 @@ Complete refactoring of the user authentication service to adopt best practices,
 
 ---
 
-## Phase 2: Entity Layer - Maximize Immutability (Days 3-4)
+## Phase 2: Entity Layer - Maximize Immutability (Days 3-4)  ✅
 
-### 2.1 User Entity Refactoring ⬜
+### 2.1 User Entity Refactoring  ✅
 **File**: `User.java`
 
 **Changes**:
@@ -66,7 +66,7 @@ Complete refactoring of the user authentication service to adopt best practices,
 
 **Breaking Changes**: Entity API changes (affects service layer)
 
-### 2.2 RefreshToken Entity Refactoring ⬜
+### 2.2 RefreshToken Entity Refactoring  ✅
 **File**: `RefreshToken.java`
 
 **Changes**:
