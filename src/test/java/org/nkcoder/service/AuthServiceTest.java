@@ -73,10 +73,8 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        JwtProperties.Expiration expiration = mock(JwtProperties.Expiration.class);
-        when(expiration.getRefresh()).thenReturn("30m");
-        when(expiration.getAccess()).thenReturn("7m");
-        when(jwtProperties.getExpiration()).thenReturn(expiration);
+        JwtProperties.Expiration expiration = new JwtProperties.Expiration("7m", "30m");
+        when(jwtProperties.expiration()).thenReturn(expiration);
         when(jwtUtil.getTokenExpiry(anyString())).thenReturn(expiresAt);
     }
 

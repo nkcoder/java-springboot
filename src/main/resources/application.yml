@@ -50,8 +50,8 @@ spring:
 # JWT Configuration
 jwt:
   secret:
-    access: ${JWT_ACCESS_SECRET:default-hmac512-access-secret-key-for-user-service-2025}
-    refresh: ${JWT_REFRESH_SECRET:default-hmac512-refresh-secret-key-for-user-service-2025}
+    access: ${JWT_ACCESS_SECRET:default-hmac512-access-secret-key-for-user-service-2025-extended-64-bytes}
+    refresh: ${JWT_REFRESH_SECRET:default-hmac512-refresh-secret-key-for-user-service-2025-extended-64b}
   expiration:
     access: ${JWT_ACCESS_EXPIRES_IN:15m}
     refresh: ${JWT_REFRESH_EXPIRES_IN:7d}
