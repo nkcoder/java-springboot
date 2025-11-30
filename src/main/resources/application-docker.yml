@@ -28,7 +28,7 @@ jwt:
   expiration:
     access: ${JWT_ACCESS_EXPIRES_IN:15m}
     refresh: ${JWT_REFRESH_EXPIRES_IN:7d}
-  issuer: ${JWT_ISSUER:timor-user-service}
+  issuer: ${JWT_ISSUER:user-service}
 
 # CORS Configuration
 cors:
@@ -41,7 +41,7 @@ cors:
 # Logging Configuration
 logging:
   level:
-    com.timor.user: INFO
+    org.nkcoder: INFO
     org.springframework.security: INFO
     org.hibernate.SQL: INFO
   file:

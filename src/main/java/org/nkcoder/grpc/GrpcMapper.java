@@ -1,13 +1,13 @@
 package org.nkcoder.grpc;
 
 import com.google.protobuf.Timestamp;
-import com.timor.user.grpc.AuthProto;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import org.nkcoder.dto.auth.AuthResponse;
 import org.nkcoder.dto.auth.AuthTokens;
 import org.nkcoder.dto.user.UserResponse;
+import org.nkcoder.generated.grpc.AuthProto;
 
 public class GrpcMapper {
   public static AuthProto.AuthResponse toAuthResponse(AuthResponse authResponse) {

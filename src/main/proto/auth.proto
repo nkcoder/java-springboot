@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package com.timor.user.grpc;
+package org.nkcoder.grpc;
 
-option java_package = "com.timor.user.grpc";
+option java_package = "org.nkcoder.generated.grpc";
 option java_outer_classname = "AuthProto";
 
 import "google/protobuf/timestamp.proto";

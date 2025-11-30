@@ -12,7 +12,7 @@ public class IntegrationTestingBase {
   @Container @ServiceConnection
   static final PostgreSQLContainer<?> postgreSQLContainer =
       new PostgreSQLContainer<>("postgres:17")
-          .withDatabaseName("timor_users")
-          .withUsername("user1")
-          .withPassword("password1");
+          .withDatabaseName("users")
+          .withUsername("test_user")
+          .withPassword("test_password0");
 }

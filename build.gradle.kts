@@ -13,7 +13,7 @@ plugins {
     jacoco
 }
 
-group = "com.timor"
+group = "org.nkcoder"
 version = "0.1.0"
 
 java {
@@ -95,7 +95,7 @@ tasks.withType<JavaCompile> {
 
 // set up the output JAR name
 tasks.bootJar {
-    archiveFileName.set("user-service.jar")
+    archiveFileName.set("user-application.jar")
 }
 
 // Native image support for GraalVM
@@ -103,7 +103,7 @@ graalvmNative {
     binaries {
         named("main") {
             imageName.set("user-service")
-            mainClass.set("com.timor.user.UserServiceApplication")
+            mainClass.set("org.nkcoder.UserApplication")
             debug.set(false)
         }
     }
@@ -193,7 +193,10 @@ tasks.jacocoTestReport {
                     "**/dto/**",
                     "**/enums/**",
                     "**/exceptions/**",
-                    "**/*Application*"
+                    "**/*Application*",
+                    // gRPC generated code exclusions
+                    "**/proto/**",              // Proto-related generated classes
+                    "**/generated/**"
                 )
             }
         })
@@ -214,6 +217,23 @@ tasks.jacocoTestCoverageVerification {
                 minimum = "0.80".toBigDecimal()
             }
         }
+        classDirectories.setFrom(
+            // Same exclusions for verification
+            files(classDirectories.files.map {
+                fileTree(it) {
+                    exclude(
+                        "**/config/**",
+                        "**/dto/**",
+                        "**/enums/**",
+                        "**/exception/**",
+                        "**/*Application*",
+
+                        "**/proto/**",
+                        "**/generated/**"
+                    )
+                }
+            })
+        )
     }
 }
 tasks.check {

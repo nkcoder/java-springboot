@@ -1,7 +1,5 @@
 package org.nkcoder.grpc;
 
-import com.timor.user.grpc.AuthProto;
-import com.timor.user.grpc.AuthServiceGrpc;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
@@ -9,6 +7,9 @@ import org.nkcoder.dto.auth.AuthResponse;
 import org.nkcoder.dto.auth.LoginRequest;
 import org.nkcoder.dto.auth.RegisterRequest;
 import org.nkcoder.enums.Role;
+import org.nkcoder.generated.grpc.AuthProto;
+import org.nkcoder.generated.grpc.AuthProto.ApiResponse;
+import org.nkcoder.generated.grpc.AuthServiceGrpc;
 import org.nkcoder.service.AuthService;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +49,8 @@ public class AuthGrpcService extends AuthServiceGrpc.AuthServiceImplBase {
 
     logger.info("auth response: {}", response);
 
-    var grpcResponse = GrpcMapper.toAuthResponse(response);
-    var apiResponse =
+    AuthProto.AuthResponse grpcResponse = GrpcMapper.toAuthResponse(response);
+    ApiResponse apiResponse =
         AuthProto.ApiResponse.newBuilder()
             .setMessage("User registered successfully")
             .setData(grpcResponse)
@@ -76,8 +77,8 @@ public class AuthGrpcService extends AuthServiceGrpc.AuthServiceImplBase {
     LoginRequest loginRequest = new LoginRequest(request.getEmail(), request.getPassword());
     AuthResponse response = authService.login(loginRequest);
 
-    var grpcResponse = GrpcMapper.toAuthResponse(response);
-    var apiResponse =
+    AuthProto.AuthResponse grpcResponse = GrpcMapper.toAuthResponse(response);
+    ApiResponse apiResponse =
         AuthProto.ApiResponse.newBuilder()
             .setMessage("User logged in successfully")
             .setData(grpcResponse)
