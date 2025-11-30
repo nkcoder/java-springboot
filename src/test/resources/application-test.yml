@@ -1,0 +1,45 @@
+# Test profile configuration
+# This file is automatically loaded when running with @ActiveProfiles("test") or when Spring detects the test classpath
+spring:
+  datasource:
+    # TestContainers will override these via @DynamicPropertySource
+    # These are fallback values for simple unit tests
+    url: jdbc:tc:postgresql:17:///testdb
+    username: test
+    password: test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+
+  jpa:
+    # Show SQL in tests for debugging (disable in CI if too noisy)
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    hibernate:
+      # Hibernate validates entity mappings against the actual schema created by Flyway, catching mapping errors early
+      ddl-auto: validate
+
+  flyway:
+    # Run migrations in tests to match production schema
+    enabled: true
+    # Clean database before migrating (test isolation)
+    clean-disabled: false
+
+# JWT configuration for tests
+# Short secrets are fine for tests - not production
+jwt:
+  secret:
+    access: test-access-secret-key-minimum-64-bytes-for-hs512-algorithm-padding
+    refresh: test-refresh-secret-key-minimum-64-bytes-for-hs512-algorithm-padding
+  expiration:
+    access: 15m
+    refresh: 7d
+  issuer: test-issuer
+
+# Logging - more verbose for debugging test failures
+logging:
+  level:
+    org.nkcoder: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.sql: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE

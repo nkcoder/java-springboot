@@ -1,4 +1,4 @@
-import com.google.protobuf.gradle.*
+import com.google.protobuf.gradle.id
 
 plugins {
     id("org.springframework.boot") version "3.5.8"
@@ -10,6 +10,7 @@ plugins {
     id("com.diffplug.spotless") version "8.1.0"
     id("com.google.protobuf") version "0.9.5"
     java
+    jacoco
 }
 
 group = "com.timor"
@@ -170,3 +171,53 @@ sourceSets {
         }
     }
 }
+
+// Test coverage: jacoco
+jacoco {
+    toolVersion = "0.8.14"
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)      // For CI/CD integration
+        html.required.set(true)     // For human-readable reports
+        csv.required.set(false)
+    }
+
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) {
+                exclude(
+                    "**/config/**",
+                    "**/dto/**",
+                    "**/enums/**",
+                    "**/exceptions/**",
+                    "**/*Application*"
+                )
+            }
+        })
+    )
+}
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.jacocoTestReport)
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+        rule {
+            element = "CLASS"
+            includes = listOf("org.nkcoder.service.*")
+            limit {
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+    }
+}
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
+}
+
+
