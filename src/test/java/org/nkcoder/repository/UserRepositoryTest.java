@@ -9,46 +9,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.nkcoder.config.JpaAuditingConfig;
 import org.nkcoder.entity.User;
 import org.nkcoder.enums.Role;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-// Loads only JPA components (entities, repositories), much faster than @SpringBootTest
-@DataJpaTest
-@Testcontainers
-// @CreatedDate and @LastModifiedDate only works when Spring Data JPA auditing is enabled
-@Import(JpaAuditingConfig.class)
-@ActiveProfiles("test")
-// Prevents Spring from replacing our PostgreSQL with H2
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @DisplayName("UserRepository")
-public class UserRepositoryTest {
-
-  @Container
-  static PostgreSQLContainer<?> postgres =
-      new PostgreSQLContainer<>("postgres:17")
-          .withDatabaseName("testdb")
-          .withUsername("test")
-          .withPassword("test");
-
-  @ServiceConnection
-  static void configureProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", postgres::getJdbcUrl);
-    registry.add("spring.datasource.username", postgres::getUsername);
-    registry.add("spring.datasource.password", postgres::getPassword);
-  }
-
+public class UserRepositoryTest extends BaseRepositoryTest {
   @Autowired private UserRepository userRepository;
   // JPA-aware test utility for persist/flush/clear operations
   @Autowired private TestEntityManager entityManager;

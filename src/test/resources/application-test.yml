@@ -1,14 +1,6 @@
 # Test profile configuration
 # This file is automatically loaded when running with @ActiveProfiles("test") or when Spring detects the test classpath
 spring:
-  datasource:
-    # TestContainers will override these via @DynamicPropertySource
-    # These are fallback values for simple unit tests
-    url: jdbc:tc:postgresql:17:///testdb
-    username: test
-    password: test
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
-
   jpa:
     # Show SQL in tests for debugging (disable in CI if too noisy)
     show-sql: true
