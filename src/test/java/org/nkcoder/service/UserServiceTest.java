@@ -60,7 +60,13 @@ class UserServiceTest {
 
   @Test
   void findById_success() {
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -81,7 +87,13 @@ class UserServiceTest {
 
   @Test
   void findByEmail_success() {
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
 
     when(userRepository.findByEmail(email.toLowerCase())).thenReturn(Optional.of(user));
@@ -102,11 +114,21 @@ class UserServiceTest {
 
   @Test
   void updateProfile_success_updateNameAndEmail() {
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UpdateProfileRequest request = new UpdateProfileRequest("new@example.com", "New Name");
     User updatedUser =
-        UserTestFactory.createWithId(
-            userId, "new@example.com", encodedPassword, "New Name", role, false);
+        UserTestFactory.aUser()
+            .withEmail("new@example.com")
+            .withPassword(encodedPassword)
+            .withName("New Name")
+            .withRole(role)
+            .build();
     UserResponse userResponse =
         new UserResponse(userId, "new@example.com", "New Name", role, false, now, now, now);
 
@@ -126,7 +148,13 @@ class UserServiceTest {
 
   @Test
   void updateProfile_emailExists_throws() {
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UpdateProfileRequest request = new UpdateProfileRequest("existing@example.com", "New Name");
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -137,10 +165,21 @@ class UserServiceTest {
 
   @Test
   void updateProfile_updateNameOnly() {
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UpdateProfileRequest request = new UpdateProfileRequest(null, "Updated Name");
     User updatedUser =
-        UserTestFactory.createWithId(userId, email, encodedPassword, "Updated Name", role, false);
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName("Updated Name")
+            .withRole(role)
+            .build();
     UserResponse userResponse =
         new UserResponse(userId, email, "Updated Name", role, false, now, now, now);
 
@@ -165,7 +204,13 @@ class UserServiceTest {
   @Test
   void changePassword_success() {
     ChangePasswordRequest request = new ChangePasswordRequest("oldPass", "newPass", "newPass");
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(passwordEncoder.matches("oldPass", encodedPassword)).thenReturn(true);
@@ -178,7 +223,13 @@ class UserServiceTest {
 
   @Test
   void changePassword_currentPasswordsDoNotMatch_throws() {
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
     ChangePasswordRequest request = new ChangePasswordRequest("oldPass", "newPass", "different");
@@ -196,7 +247,13 @@ class UserServiceTest {
   @Test
   void changePassword_currentPasswordIncorrect_throws() {
     ChangePasswordRequest request = new ChangePasswordRequest("oldPass", "newPass", "newPass");
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(passwordEncoder.matches("oldPass", encodedPassword)).thenReturn(false);
@@ -212,7 +269,13 @@ class UserServiceTest {
 
   @Test
   void changeUserPassword_success() {
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(passwordEncoder.encode("adminNewPass")).thenReturn("encodedAdminPass");

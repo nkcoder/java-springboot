@@ -78,7 +78,14 @@ class AuthServiceTest {
   @Test
   void register_success() {
     RegisterRequest request = new RegisterRequest(email, password, name, role);
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withId(userId)
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
 
     when(userRepository.existsByEmail(email.toLowerCase())).thenReturn(false);
@@ -119,7 +126,14 @@ class AuthServiceTest {
   @Test
   void login_success() {
     LoginRequest request = new LoginRequest(email, password);
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withId(userId)
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
 
     when(userRepository.findByEmail(email.toLowerCase())).thenReturn(Optional.of(user));
@@ -151,7 +165,13 @@ class AuthServiceTest {
   @Test
   void login_invalidPassword_throws() {
     LoginRequest request = new LoginRequest(email, password);
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withEmail(email)
+            .withPassword(password)
+            .withName(name)
+            .withRole(role)
+            .build();
 
     when(userRepository.findByEmail(email.toLowerCase())).thenReturn(Optional.of(user));
     when(passwordEncoder.matches(password, encodedPassword)).thenReturn(false);
@@ -177,7 +197,14 @@ class AuthServiceTest {
     when(storedToken.isExpired()).thenReturn(false);
     when(storedToken.getTokenFamily()).thenReturn(tokenFamily);
 
-    User user = UserTestFactory.createWithId(userId, email, encodedPassword, name, role, false);
+    User user =
+        UserTestFactory.aUser()
+            .withId(userId)
+            .withEmail(email)
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(jwtUtil.generateAccessToken(userId, email, role)).thenReturn(accessToken);
     when(jwtUtil.generateRefreshToken(userId, tokenFamily)).thenReturn("new.refresh.token");
@@ -312,8 +339,13 @@ class AuthServiceTest {
     String upperCaseEmail = "TEST@EXAMPLE.COM";
     LoginRequest request = new LoginRequest(upperCaseEmail, password);
     User user =
-        UserTestFactory.createWithId(
-            userId, email.toLowerCase(), encodedPassword, name, role, false);
+        UserTestFactory.aUser()
+            .withId(userId)
+            .withEmail(email.toLowerCase())
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UserResponse userResponse =
         new UserResponse(userId, email.toLowerCase(), name, role, false, now, now, now);
 
@@ -334,8 +366,13 @@ class AuthServiceTest {
     String upperCaseEmail = "TEST@EXAMPLE.COM";
     RegisterRequest request = new RegisterRequest(upperCaseEmail, password, name, role);
     User user =
-        UserTestFactory.createWithId(
-            userId, email.toLowerCase(), encodedPassword, name, role, false);
+        UserTestFactory.aUser()
+            .withId(userId)
+            .withEmail(email.toLowerCase())
+            .withPassword(encodedPassword)
+            .withName(name)
+            .withRole(role)
+            .build();
     UserResponse userResponse =
         new UserResponse(userId, email.toLowerCase(), name, role, false, now, now, now);
 
