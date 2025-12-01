@@ -3,6 +3,7 @@ package org.nkcoder.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -135,7 +136,12 @@ public class UserRepositoryTest extends BaseRepositoryTest {
     @Test
     @DisplayName("updates last login timestamp")
     void updatesTimestamp() {
-      LocalDateTime loginTime = LocalDateTime.now();
+
+      // There is a timestamp precision issue in Java/PostgreSQL tests
+      // PostgreSQL's timestamp type stores microsecond precision, but Java's LocalDateTime.now()
+      // has nanosecond precision. The nanoseconds get truncated when stored, causing isEqualTo()
+      // to fail.
+      LocalDateTime loginTime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
       int updated = userRepository.updateLastLoginAt(testUser.getId(), loginTime);
 
