@@ -197,6 +197,7 @@ tasks.jacocoTestReport {
                     "**/exceptions/**",
                     "**/*Application*",
                     // gRPC generated code exclusions
+                    "**/grpc/**",
                     "**/proto/**",              // Proto-related generated classes
                     "**/generated/**"
                 )
@@ -231,6 +232,7 @@ tasks.jacocoTestCoverageVerification {
                         "**/*Application*",
 
                         "**/proto/**",
+                        "**/grpc/**",
                         "**/generated/**"
                     )
                 }
