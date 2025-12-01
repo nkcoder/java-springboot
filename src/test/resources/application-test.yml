@@ -35,3 +35,6 @@ logging:
     org.springframework.security: DEBUG
     org.hibernate.sql: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
+grpc:
+  server:
+    port: 0   # Random available port

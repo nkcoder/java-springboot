@@ -62,6 +62,7 @@ public class JwtUtil {
         .expiration(expiration)
         .claim("email", email)
         .claim("role", role.name())
+        .claim("jti", UUID.randomUUID().toString())
         .signWith(accessTokenKey, Jwts.SIG.HS512)
         .compact();
   }
@@ -77,6 +78,7 @@ public class JwtUtil {
         .issuedAt(now)
         .expiration(expiration)
         .claim("tokenFamily", tokenFamily)
+        .claim("jti", UUID.randomUUID().toString())
         .signWith(refreshTokenKey, Jwts.SIG.HS512)
         .compact();
   }

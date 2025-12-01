@@ -62,6 +62,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.3")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    testImplementation("io.rest-assured:rest-assured:5.5.6")
+    testImplementation("io.rest-assured:json-path:5.5.6")
 
     // Swagger
     implementation("io.swagger.core.v3:swagger-models:2.2.34")

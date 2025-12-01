@@ -1,4 +1,4 @@
-package org.nkcoder.user;
+package org.nkcoder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
