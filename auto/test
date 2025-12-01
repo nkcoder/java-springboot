@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-
-export SPRING_PROFILES_ACTIVE=test
-./gradlew --no-daemon --quiet spotlessApply
-./gradlew --no-daemon clean build test
