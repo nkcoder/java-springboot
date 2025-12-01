@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+set -e
+
+echo "🚀 Running pre-push checks..."
+
+# Run tests
+echo "🧪 Running tests..."
+./gradlew test --quiet
+
+if [ $? -ne 0 ]; then
+    echo "❌ Tests failed! Push aborted."
+    exit 1
+fi
+
+# Check coverage
+echo "📊 Checking test coverage..."
+./gradlew jacocoTestCoverageVerification --quiet
+
+if [ $? -ne 0 ]; then
+    echo "❌ Coverage below threshold! Push aborted."
+    exit 1
+fi
+
+echo "✅ All pre-push checks passed!"
