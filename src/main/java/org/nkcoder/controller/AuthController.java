@@ -33,7 +33,7 @@ public class AuthController {
   @PostMapping("/register")
   public ResponseEntity<ApiResponse<AuthResponse>> register(
       @Valid @RequestBody RegisterRequest request) {
-    logger.info("Registration request for email: {}", request.email());
+    logger.debug("Registration request received.");
 
     AuthResponse authResponse = authService.register(request);
 
@@ -43,7 +43,7 @@ public class AuthController {
 
   @PostMapping("/login")
   public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-    logger.info("Login request for email: {}", request.email());
+    logger.debug("Login request received.");
 
     AuthResponse authResponse = authService.login(request);
 

@@ -162,7 +162,7 @@ all identified issues with an aggressive approach to modernization.
 
 ## Phase 4: API Layer - Modern REST Design (Days 8-9)
 
-### 4.1 Custom Annotations & Argument Resolvers ⬜
+### 4.1 Custom Annotations & Argument Resolvers ✅
 
 **New Files**: `CurrentUser.java`, `CurrentUserArgumentResolver.java`, `WebConfig.java`
 
@@ -175,7 +175,7 @@ all identified issues with an aggressive approach to modernization.
 
 **Breaking Changes**: Controller method signatures change (BREAKING but cleaner)
 
-### 4.2 Controller Refactoring ⬜
+### 4.2 Controller Refactoring ✅
 
 **Files**: `AuthController.java`, `UserController.java`
 
@@ -190,7 +190,7 @@ all identified issues with an aggressive approach to modernization.
 
 **Breaking Changes**: None (internal improvements)
 
-### 4.3 Global Exception Handler Enhancement ⬜
+### 4.3 Global Exception Handler Enhancement ✅
 
 **File**: `GlobalExceptionHandler.java`
 

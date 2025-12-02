@@ -235,7 +235,9 @@ class UserControllerTest extends BaseControllerTest {
       // Given
       ChangePasswordRequest request =
           new ChangePasswordRequest(
-              "", "NewAdminPassword123!", ""); // Only newPassword is used for admin
+              "OldPassword123!",
+              "NewAdminPassword123!",
+              "NewAdminPassword123!"); // Only newPassword is used for admin
       doNothing().when(userService).changeUserPassword(testUserId, "NewAdminPassword123!");
 
       // When & Then

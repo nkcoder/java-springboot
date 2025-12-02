@@ -1,8 +1,9 @@
 package org.nkcoder.exception;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.nkcoder.dto.common.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,20 +52,21 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ApiResponse<Object>> handleValidationExceptions(
       MethodArgumentNotValidException e) {
-    logger.error("Validation (invalid method argument) error: {}", e.getMessage());
+    logger.debug("Validation error: {} field(s) failed", e.getBindingResult().getErrorCount());
 
-    Map<String, String> errors = new HashMap<>();
-    e.getBindingResult()
-        .getAllErrors()
-        .forEach(
-            (error) -> {
-              String fieldName = ((FieldError) error).getField();
-              String errorMessage = error.getDefaultMessage();
-              errors.put(fieldName, errorMessage);
-            });
+    Map<String, String> errors =
+        e.getBindingResult().getFieldErrors().stream()
+            .collect(
+                Collectors.toMap(
+                    FieldError::getField,
+                    fieldError ->
+                        fieldError.getDefaultMessage() != null
+                            ? fieldError.getDefaultMessage()
+                            : "Invalid value",
+                    (existing, replacement) -> existing));
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-        .body(ApiResponse.error("Validation failed"));
+        .body(new ApiResponse<>("Validation failed", errors, LocalDateTime.now()));
   }
 
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
@@ -75,26 +77,37 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error("Method not allowed: " + e.getMessage()));
   }
 
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadableException(
+      HttpMessageNotReadableException e) {
+    logger.debug("Message not readable: {}", e.getMostSpecificCause().getMessage());
+
+    String message = "Malformed JSON request";
+    Throwable cause = e.getCause();
+    if (cause instanceof JsonParseException) {
+      message = "Invalid JSON format: " + cause.getMessage();
+    }
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(message));
+  }
+
+  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<ApiResponse<Object>> handleHttpMediaTypeNotSupportedException(
+      HttpMediaTypeNotSupportedException e) {
+    logger.debug("Unsupported media type: {}", e.getContentType());
+
+    String message =
+        String.format(
+            "Content type '%s' is not supported. Use 'application/json'", e.getContentType());
+    return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+        .body(ApiResponse.error(message));
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception e) {
     logger.error("Unexpected error: {}", e.getMessage(), e);
-    if (e instanceof JsonParseException) {
-      logger.error("JSON parsing error: {}", e.getMessage());
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(ApiResponse.error("Invalid JSON format"));
-    }
-    if (e instanceof HttpMediaTypeNotSupportedException) {
-      logger.error("Unsupported media type: {}", e.getMessage());
-      return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-          .body(ApiResponse.error("Unsupported media type"));
-    }
-    if (e instanceof HttpMessageNotReadableException) {
-      logger.error("Message not readable: {}", e.getMessage());
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-          .body(ApiResponse.error("Message not readable"));
-    }
 
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(ApiResponse.error("Internal server error"));
+        .body(ApiResponse.error("An unexpected error occurred. Please try again later."));
   }
 }

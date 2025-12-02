@@ -1,8 +1,8 @@
 package org.nkcoder.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import org.nkcoder.annotation.CurrentUser;
 import org.nkcoder.dto.common.ApiResponse;
 import org.nkcoder.dto.user.ChangePasswordRequest;
 import org.nkcoder.dto.user.UpdateProfileRequest;
@@ -27,11 +27,8 @@ public class UserController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<ApiResponse<UserResponse>> getMe(HttpServletRequest request) {
-    UUID userId = (UUID) request.getAttribute("userId");
-    String email = (String) request.getAttribute("email");
-
-    logger.info("Get profile request for user: {}", email);
+  public ResponseEntity<ApiResponse<UserResponse>> getMe(@CurrentUser UUID userId) {
+    logger.info("Get profile request for userId: {}", userId);
 
     UserResponse userResponse = userService.findById(userId);
 
@@ -41,12 +38,9 @@ public class UserController {
 
   @PatchMapping("/me")
   public ResponseEntity<ApiResponse<UserResponse>> updateMe(
-      @Valid @RequestBody UpdateProfileRequest request, HttpServletRequest httpRequest) {
+      @CurrentUser UUID userId, @Valid @RequestBody UpdateProfileRequest request) {
 
-    UUID userId = (UUID) httpRequest.getAttribute("userId");
-    String email = (String) httpRequest.getAttribute("email");
-
-    logger.info("Update profile request for user: {}", email);
+    logger.info("Update profile request for userId: {}", userId);
 
     UserResponse userResponse = userService.updateProfile(userId, request);
 
@@ -55,12 +49,9 @@ public class UserController {
 
   @PatchMapping("/me/password")
   public ResponseEntity<ApiResponse<Void>> changeMyPassword(
-      @Valid @RequestBody ChangePasswordRequest request, HttpServletRequest httpRequest) {
+      @CurrentUser UUID userId, @Valid @RequestBody ChangePasswordRequest request) {
 
-    UUID userId = (UUID) httpRequest.getAttribute("userId");
-    String email = (String) httpRequest.getAttribute("email");
-
-    logger.info("Change password request for user: {}", email);
+    logger.info("Change password request for userId: {}", userId);
 
     userService.changePassword(userId, request);
 
@@ -71,7 +62,7 @@ public class UserController {
   @GetMapping("/{userId}")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable UUID userId) {
-    logger.info("Admin get user request for user: {}", userId);
+    logger.info("Admin get user request for userId: {}", userId);
 
     UserResponse userResponse = userService.findById(userId);
 
@@ -83,7 +74,7 @@ public class UserController {
   public ResponseEntity<ApiResponse<UserResponse>> updateUser(
       @PathVariable UUID userId, @Valid @RequestBody UpdateProfileRequest request) {
 
-    logger.info("Admin update user request for user: {}", userId);
+    logger.info("Admin update user request for userId: {}", userId);
 
     UserResponse userResponse = userService.updateProfile(userId, request);
 
@@ -93,9 +84,9 @@ public class UserController {
   @PatchMapping("/{userId}/password")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ApiResponse<Void>> changeUserPassword(
-      @PathVariable UUID userId, @RequestBody ChangePasswordRequest request) {
+      @PathVariable UUID userId, @Valid @RequestBody ChangePasswordRequest request) {
 
-    logger.info("Admin change password request for user: {}", userId);
+    logger.info("Admin change password request for userId: {}", userId);
 
     // For admin, we only use the newPassword field
     userService.changeUserPassword(userId, request.newPassword());
