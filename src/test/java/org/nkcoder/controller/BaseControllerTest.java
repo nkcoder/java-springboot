@@ -1,8 +1,8 @@
 package org.nkcoder.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.nkcoder.TestConfig;
 import org.nkcoder.config.JpaAuditingConfig;
+import org.nkcoder.config.TestConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

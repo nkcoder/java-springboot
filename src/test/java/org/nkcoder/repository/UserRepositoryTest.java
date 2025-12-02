@@ -10,13 +10,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.nkcoder.config.DataJpaIntegrationTest;
 import org.nkcoder.entity.User;
 import org.nkcoder.enums.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+@DataJpaIntegrationTest
 @DisplayName("UserRepository")
-public class UserRepositoryTest extends BaseRepositoryTest {
+public class UserRepositoryTest {
   @Autowired private UserRepository userRepository;
   // JPA-aware test utility for persist/flush/clear operations
   @Autowired private TestEntityManager entityManager;
