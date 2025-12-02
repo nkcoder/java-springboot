@@ -17,7 +17,9 @@ group = "org.nkcoder"
 version = "0.1.0"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
 }
 
 repositories {
@@ -172,6 +174,14 @@ sourceSets {
             srcDirs("buf-gen/generated/sources/proto/main/grpc")
         }
     }
+}
+
+tasks.test {
+    maxParallelForks = Runtime.getRuntime().availableProcessors()
+    failFast = true
+
+    // Cache and incremental test execution
+    outputs.cacheIf { true }
 }
 
 // Test coverage: jacoco

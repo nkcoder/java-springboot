@@ -1,10 +1,11 @@
 package org.nkcoder.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.ServletException;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.apache.logging.log4j.util.Strings;
 import org.nkcoder.dto.common.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,8 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
   private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
 
+  private static final String CONTENT_TYPE_JSON = "application/json";
+
   private final ObjectMapper objectMapper;
 
   @Autowired
@@ -30,18 +33,30 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
       HttpServletRequest request,
       HttpServletResponse response,
       AuthenticationException authException)
-      throws IOException, ServletException {
+      throws IOException {
 
-    logger.error("Unauthorized error: {}", authException.getMessage());
+    logger.debug("Unauthorized access attempt to: {}", request.getRequestURI());
 
-    response.setContentType("application/json");
+    response.setContentType(CONTENT_TYPE_JSON);
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-    ApiResponse<Object> apiResponse =
-        ApiResponse.error("Unauthorized: " + authException.getMessage());
+    String errorMessage = determineErrorMessage(authException);
+    ApiResponse<Void> apiResponse = ApiResponse.error(errorMessage);
 
     objectMapper.writeValue(response.getOutputStream(), apiResponse);
     response.getOutputStream().flush();
-    response.getOutputStream().close();
+    // Do NOT close the stream - let the servlet container manage it
+  }
+
+  private String determineErrorMessage(AuthenticationException authException) {
+    if (authException.getCause() instanceof ExpiredJwtException) {
+      return "Token has expired";
+    }
+
+    if (Strings.isNotBlank(authException.getMessage())) {
+      return "Authentication required: " + authException.getMessage();
+    }
+
+    return "Authentication required";
   }
 }
