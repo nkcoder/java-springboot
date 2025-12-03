@@ -10,11 +10,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.test.context.ActiveProfiles;
 
+/** Why @EnableJpaAuditing: because @CreatedDate and @LastModifiedDate is set by JPA auditing. */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @DataJpaTest
 @Import(TestContainersConfiguration.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@EnableJpaAuditing
+@EnableJpaAuditing //
 public @interface DataJpaIntegrationTest {}
