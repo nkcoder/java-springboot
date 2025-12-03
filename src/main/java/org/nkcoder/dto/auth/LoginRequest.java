@@ -1,8 +1,12 @@
 package org.nkcoder.dto.auth;
 
+import static org.nkcoder.validation.ValidationMessages.EMAIL_INVALID;
+import static org.nkcoder.validation.ValidationMessages.EMAIL_REQUIRED;
+import static org.nkcoder.validation.ValidationMessages.PASSWORD_REQUIRED;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record LoginRequest(
-    @NotBlank(message = "Email is required") @Email(message = "Please provide a valid email") String email,
-    @NotBlank(message = "Password is required") String password) {}
+    @NotBlank(message = EMAIL_REQUIRED) @Email(message = EMAIL_INVALID) String email,
+    @NotBlank(message = PASSWORD_REQUIRED) String password) {}
