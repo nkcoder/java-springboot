@@ -10,6 +10,8 @@ spring:
     hibernate:
       # Hibernate validates entity mappings against the actual schema created by Flyway, catching mapping errors early
       ddl-auto: validate
+    # faster tests
+    open-in-view: false
 
   flyway:
     # Run migrations in tests to match production schema

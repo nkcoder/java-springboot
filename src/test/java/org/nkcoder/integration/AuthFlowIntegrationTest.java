@@ -3,14 +3,27 @@ package org.nkcoder.integration;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
+import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.nkcoder.config.IntegrationTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 
+@IntegrationTest
 @DisplayName("Auth Flow Integration Tests")
-class AuthFlowIntegrationTest extends BaseIntegrationTest {
+class AuthFlowIntegrationTest {
+
+  @LocalServerPort private int port;
+
+  @BeforeEach
+  void setupRestAssured() {
+    RestAssured.port = port;
+    RestAssured.basePath = "/api/users";
+  }
 
   @Nested
   @DisplayName("Complete Authentication Flow")

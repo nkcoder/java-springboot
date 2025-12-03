@@ -1,4 +1,4 @@
-package org.nkcoder.controller;
+package org.nkcoder.integration;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.nkcoder.config.IntegrationTest;
 import org.nkcoder.dto.auth.AuthResponse;
 import org.nkcoder.dto.auth.AuthTokens;
 import org.nkcoder.dto.user.UserResponse;
@@ -21,43 +22,18 @@ import org.nkcoder.service.UserService;
 import org.nkcoder.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
  * Use @SpringBootTest to load the full context to test the authentication of endpoints.
  * Because @WebMvcTest won't load SecurityConfig and JwtAuthenticationEntryPoint.
  */
-@SpringBootTest
 @AutoConfigureMockMvc
+@IntegrationTest
 @DisplayName("AuthController Security Tests")
-@ActiveProfiles("test")
-public class AuthControllerSecurityTest {
-
-  // Singleton container for database (needed by JPA)
-  static PostgreSQLContainer<?> postgres;
-
-  static {
-    postgres =
-        new PostgreSQLContainer<>("postgres:17")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
-    postgres.start();
-  }
-
-  @DynamicPropertySource
-  static void configureProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", postgres::getJdbcUrl);
-    registry.add("spring.datasource.username", postgres::getUsername);
-    registry.add("spring.datasource.password", postgres::getPassword);
-  }
+public class AuthControllerIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
 

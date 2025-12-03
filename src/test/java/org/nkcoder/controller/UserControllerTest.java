@@ -15,12 +15,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.nkcoder.config.SecurityConfig;
 import org.nkcoder.dto.user.ChangePasswordRequest;
 import org.nkcoder.dto.user.UpdateProfileRequest;
 import org.nkcoder.dto.user.UserResponse;
 import org.nkcoder.enums.Role;
-import org.nkcoder.security.JwtAuthenticationEntryPoint;
 import org.nkcoder.security.JwtAuthenticationFilter;
 import org.nkcoder.service.UserService;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
@@ -33,16 +31,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @DisplayName("UserController tests")
 @WebMvcTest(
-    value = UserController.class,
+    controllers = UserController.class,
     excludeAutoConfiguration = {SecurityAutoConfiguration.class},
     excludeFilters = {
       @ComponentScan.Filter(
           type = FilterType.ASSIGNABLE_TYPE,
-          classes = {
-            JwtAuthenticationFilter.class,
-            SecurityConfig.class,
-            JwtAuthenticationEntryPoint.class
-          })
+          classes = {JwtAuthenticationFilter.class})
     })
 class UserControllerTest extends BaseControllerTest {
 
