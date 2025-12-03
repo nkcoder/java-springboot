@@ -70,7 +70,7 @@ class UserServiceTest {
     UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-    when(userMapper.toResponse(user)).thenReturn(userResponse);
+    when(userMapper.toResponse(user)).thenReturn(Optional.of(userResponse));
 
     UserResponse result = userService.findById(userId);
 
@@ -97,7 +97,7 @@ class UserServiceTest {
     UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
 
     when(userRepository.findByEmail(email.toLowerCase())).thenReturn(Optional.of(user));
-    when(userMapper.toResponse(user)).thenReturn(userResponse);
+    when(userMapper.toResponse(user)).thenReturn(Optional.of(userResponse));
 
     UserResponse result = userService.findByEmail(email);
 
@@ -135,7 +135,7 @@ class UserServiceTest {
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
     when(userRepository.save(any(User.class))).thenReturn(updatedUser);
-    when(userMapper.toResponse(updatedUser)).thenReturn(userResponse);
+    when(userMapper.toResponseOrThrow(updatedUser)).thenReturn(userResponse);
 
     UserResponse result = userService.updateProfile(userId, request);
 
@@ -143,7 +143,7 @@ class UserServiceTest {
     verify(userRepository).findById(userId);
     verify(userRepository).existsByEmail("new@example.com");
     verify(userRepository).save(any(User.class));
-    verify(userMapper).toResponse(updatedUser);
+    verify(userMapper).toResponseOrThrow(updatedUser);
   }
 
   @Test
@@ -185,13 +185,13 @@ class UserServiceTest {
 
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(userRepository.save(any(User.class))).thenReturn(updatedUser);
-    when(userMapper.toResponse(updatedUser)).thenReturn(userResponse);
+    when(userMapper.toResponseOrThrow(updatedUser)).thenReturn(userResponse);
 
     UserResponse result = userService.updateProfile(userId, request);
 
     assertEquals(userResponse, result);
     verify(userRepository).save(any(User.class));
-    verify(userMapper).toResponse(updatedUser);
+    verify(userMapper).toResponseOrThrow(updatedUser);
   }
 
   @Test

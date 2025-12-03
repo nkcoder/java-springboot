@@ -93,7 +93,7 @@ class AuthServiceTest {
     when(userRepository.save(any(User.class))).thenReturn(user);
     when(jwtUtil.generateAccessToken(userId, email, role)).thenReturn(accessToken);
     when(jwtUtil.generateRefreshToken(eq(userId), anyString())).thenReturn(refreshToken);
-    when(userMapper.toResponse(user)).thenReturn(userResponse);
+    when(userMapper.toResponseOrThrow(user)).thenReturn(userResponse);
 
     AuthResponse response = authService.register(request);
 
@@ -140,7 +140,7 @@ class AuthServiceTest {
     when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
     when(jwtUtil.generateAccessToken(userId, email, role)).thenReturn(accessToken);
     when(jwtUtil.generateRefreshToken(eq(userId), anyString())).thenReturn(refreshToken);
-    when(userMapper.toResponse(user)).thenReturn(userResponse);
+    when(userMapper.toResponseOrThrow(user)).thenReturn(userResponse);
 
     AuthResponse response = authService.login(request);
 
@@ -209,7 +209,7 @@ class AuthServiceTest {
     when(jwtUtil.generateAccessToken(userId, email, role)).thenReturn(accessToken);
     when(jwtUtil.generateRefreshToken(userId, tokenFamily)).thenReturn("new.refresh.token");
     UserResponse userResponse = new UserResponse(userId, email, name, role, false, now, now, now);
-    when(userMapper.toResponse(user)).thenReturn(userResponse);
+    when(userMapper.toResponseOrThrow(user)).thenReturn(userResponse);
 
     AuthResponse response = authService.refreshTokens(refreshToken);
 
@@ -353,7 +353,7 @@ class AuthServiceTest {
     when(passwordEncoder.matches(password, encodedPassword)).thenReturn(true);
     when(jwtUtil.generateAccessToken(userId, email.toLowerCase(), role)).thenReturn(accessToken);
     when(jwtUtil.generateRefreshToken(eq(userId), anyString())).thenReturn(refreshToken);
-    when(userMapper.toResponse(user)).thenReturn(userResponse);
+    when(userMapper.toResponse(user)).thenReturn(Optional.of(userResponse));
 
     AuthResponse response = authService.login(request);
 
@@ -381,7 +381,7 @@ class AuthServiceTest {
     when(userRepository.save(any(User.class))).thenReturn(user);
     when(jwtUtil.generateAccessToken(userId, email.toLowerCase(), role)).thenReturn(accessToken);
     when(jwtUtil.generateRefreshToken(eq(userId), anyString())).thenReturn(refreshToken);
-    when(userMapper.toResponse(user)).thenReturn(userResponse);
+    when(userMapper.toResponse(user)).thenReturn(Optional.of(userResponse));
 
     AuthResponse response = authService.register(request);
 

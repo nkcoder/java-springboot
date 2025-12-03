@@ -24,6 +24,11 @@ public class UserService {
 
   private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
+  public static final String USER_NOT_FOUND_ID = "User not found with id: ";
+  public static final String USER_NOT_FOUND_EMAIL = "User not found with email";
+  public static final String EMAIL_ALREADY_EXISTS = "Email already exists";
+  public static final String CURRENT_PASSWORD_INCORRECT = "Current password is incorrect";
+
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
@@ -39,22 +44,19 @@ public class UserService {
   @Transactional(readOnly = true)
   public UserResponse findById(UUID id) {
     logger.debug("Finding user by ID: {}", id);
-    User user =
-        userRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-    return userMapper.toResponse(user);
+    return userRepository
+        .findById(id)
+        .flatMap(userMapper::toResponse)
+        .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND_ID + id));
   }
 
   @Transactional(readOnly = true)
   public UserResponse findByEmail(String email) {
     logger.debug("Finding user by email: {}", email);
-    User user =
-        userRepository
-            .findByEmail(email.toLowerCase())
-            .orElseThrow(
-                () -> new ResourceNotFoundException("User not found with email: " + email));
-    return userMapper.toResponse(user);
+    return userRepository
+        .findByEmail(email.toLowerCase())
+        .flatMap(userMapper::toResponse)
+        .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND_EMAIL + email));
   }
 
   @Transactional
@@ -64,7 +66,7 @@ public class UserService {
     User user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND_ID + userId));
 
     Optional.ofNullable(request.email())
         .filter(StringUtils::hasText)
@@ -72,7 +74,7 @@ public class UserService {
         .ifPresent(
             email -> {
               if (userRepository.existsByEmail(email.toLowerCase())) {
-                throw new ValidationException("Email already exists");
+                throw new ValidationException(EMAIL_ALREADY_EXISTS);
               }
               user.updateEmail(email);
             });
@@ -82,7 +84,7 @@ public class UserService {
     User updatedUser = userRepository.save(user);
     logger.debug("Profile updated successfully for user: {}", userId);
 
-    return userMapper.toResponse(updatedUser);
+    return userMapper.toResponseOrThrow(updatedUser);
   }
 
   @Transactional
@@ -92,12 +94,12 @@ public class UserService {
     User user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND_ID + userId));
 
     // Password confirmation if now validated by @PasswordMatch annotation
 
     if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
-      throw new ValidationException("Current password is incorrect");
+      throw new ValidationException(CURRENT_PASSWORD_INCORRECT);
     }
 
     user.changePassword(passwordEncoder.encode(request.newPassword()));
@@ -117,7 +119,7 @@ public class UserService {
     User user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND_ID + userId));
 
     // Update password
     user.changePassword(passwordEncoder.encode(newPassword));

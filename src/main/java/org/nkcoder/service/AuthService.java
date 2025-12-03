@@ -30,6 +30,12 @@ public class AuthService {
 
   private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
+  public static final String USER_ALREADY_EXISTS = "User already exists";
+  public static final String INVALID_CREDENTIALS = "Invalid email or password";
+  public static final String INVALID_REFRESH_TOKEN = "Invalid refresh token";
+  public static final String REFRESH_TOKEN_EXPIRED = "Refresh token expired";
+  public static final String USER_NOT_FOUND = "User not found";
+
   private final UserRepository userRepository;
   private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
@@ -59,7 +65,7 @@ public class AuthService {
 
     // Check if user already exists
     if (userRepository.existsByEmail(request.email().toLowerCase())) {
-      throw new ValidationException("User already exists");
+      throw new ValidationException(USER_ALREADY_EXISTS);
     }
 
     // Create new user
@@ -81,7 +87,7 @@ public class AuthService {
     // Save refresh token
     saveRefreshToken(tokens.refreshToken(), savedUser.getId(), tokenFamily);
 
-    return new AuthResponse(userMapper.toResponse(savedUser), tokens);
+    return new AuthResponse(userMapper.toResponseOrThrow(savedUser), tokens);
   }
 
   @Transactional
@@ -92,11 +98,11 @@ public class AuthService {
     User user =
         userRepository
             .findByEmail(request.email().toLowerCase())
-            .orElseThrow(() -> new AuthenticationException("Invalid email or password"));
+            .orElseThrow(() -> new AuthenticationException(INVALID_CREDENTIALS));
 
     // Check password
     if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-      throw new AuthenticationException("Invalid email or password");
+      throw new AuthenticationException(INVALID_CREDENTIALS);
     }
 
     // Update last login
@@ -110,7 +116,7 @@ public class AuthService {
     saveRefreshToken(tokens.refreshToken(), user.getId(), tokenFamily);
 
     logger.debug("User logged in successfully: {}", user.getId());
-    return new AuthResponse(userMapper.toResponse(user), tokens);
+    return new AuthResponse(userMapper.toResponseOrThrow(user), tokens);
   }
 
   @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -127,32 +133,28 @@ public class AuthService {
       RefreshToken storedToken =
           refreshTokenRepository
               .findByTokenForUpdate(refreshToken)
-              .orElseThrow(() -> new AuthenticationException("Invalid refresh token"));
+              .orElseThrow(() -> new AuthenticationException(INVALID_REFRESH_TOKEN));
 
       // Check if token is expired
       if (storedToken.isExpired()) {
         refreshTokenRepository.deleteByToken(refreshToken);
-        throw new AuthenticationException("Refresh token expired");
+        throw new AuthenticationException(REFRESH_TOKEN_EXPIRED);
       }
 
-      // Get user
       User user =
           userRepository
               .findById(userId)
-              .orElseThrow(() -> new AuthenticationException("User not found"));
+              .orElseThrow(() -> new AuthenticationException(USER_NOT_FOUND));
 
-      // Delete old refresh token
       refreshTokenRepository.deleteByToken(refreshToken);
 
       // Generate new tokens with same token family
       AuthTokens tokens = generateAuthTokens(user, tokenFamily);
 
-      // Save new refresh token
       saveRefreshToken(tokens.refreshToken(), user.getId(), tokenFamily);
 
       logger.debug("Tokens refreshed successfully for user: {}", userId);
-      return new AuthResponse(userMapper.toResponse(user), tokens);
-
+      return new AuthResponse(userMapper.toResponseOrThrow(user), tokens);
     } catch (JwtException e) {
       logger.error("Invalid refresh token: {}", e.getMessage());
 
@@ -163,7 +165,7 @@ public class AuthService {
               storedToken ->
                   refreshTokenRepository.deleteByTokenFamily(storedToken.getTokenFamily()));
 
-      throw new AuthenticationException("Invalid refresh token");
+      throw new AuthenticationException(INVALID_REFRESH_TOKEN);
     }
   }
 
@@ -171,14 +173,15 @@ public class AuthService {
   public void logout(String refreshToken) {
     logger.debug("Logging out user (all devices)");
 
-    // Get token data
-    RefreshToken storedToken = refreshTokenRepository.findByToken(refreshToken).orElse(null);
-    if (storedToken != null) {
-      // Delete entire token family (logout from all devices)
-      refreshTokenRepository.deleteByTokenFamily(storedToken.getTokenFamily());
-      logger.debug(
-          "Logged out from all devices for token family: {}", storedToken.getTokenFamily());
-    }
+    refreshTokenRepository
+        .findByToken(refreshToken)
+        .ifPresent(
+            storedToken -> {
+              // Delete entire token family (logout from all devices)
+              refreshTokenRepository.deleteByTokenFamily(storedToken.getTokenFamily());
+              logger.debug(
+                  "Logged out from all devices for token family: {}", storedToken.getTokenFamily());
+            });
   }
 
   @Transactional
