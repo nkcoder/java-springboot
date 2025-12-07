@@ -46,6 +46,9 @@ spring:
   docker:
     compose:
       enabled: false
+  threads:
+    virtual:
+      enabled: true
 
 # JWT Configuration
 jwt:
