@@ -157,19 +157,19 @@ public class AuthControllerIntegrationTest {
   class AdminEndpoints {
 
     @Test
-    @DisplayName("GET /api/users/{id} returns 401 without token")
+    @DisplayName("GET /api/admin/users/{id} returns 401 without token")
     void getUserByIdRequiresAuth() throws Exception {
       mockMvc
-          .perform(get("/api/users/{userId}", UUID.randomUUID()))
+          .perform(get("/api/admin/users/{userId}", UUID.randomUUID()))
           .andExpect(status().isUnauthorized());
     }
 
     @Test
-    @DisplayName("PATCH /api/users/{id} returns 401 without token")
+    @DisplayName("PATCH /api/admin/users/{id} returns 401 without token")
     void updateUserRequiresAuth() throws Exception {
       mockMvc
           .perform(
-              patch("/api/users/{userId}", UUID.randomUUID())
+              patch("/api/admin/users/{userId}", UUID.randomUUID())
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(
                       """

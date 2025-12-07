@@ -82,9 +82,9 @@ public class SecurityConfig {
                     // Protected endpoints
                     .requestMatchers("/api/users/me", "/api/users/me/**")
                     .authenticated()
-                    .requestMatchers("/api/users/{userId}")
-                    .hasRole("ADMIN")
-                    .requestMatchers("/api/users/{userId}/**")
+
+                    // Admin endpoints
+                    .requestMatchers("/api/admin/**")
                     .hasRole("ADMIN")
 
                     // All other requests require authentication
