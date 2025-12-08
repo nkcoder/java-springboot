@@ -25,50 +25,45 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/users/me")
 public class UserController {
 
-  private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-  private final UserQueryService queryService;
-  private final UserCommandService commandService;
-  private final UserRequestMapper requestMapper;
+    private final UserQueryService queryService;
+    private final UserCommandService commandService;
+    private final UserRequestMapper requestMapper;
 
-  public UserController(
-      UserQueryService queryService,
-      UserCommandService commandService,
-      UserRequestMapper requestMapper) {
-    this.queryService = queryService;
-    this.commandService = commandService;
-    this.requestMapper = requestMapper;
-  }
+    public UserController(
+            UserQueryService queryService, UserCommandService commandService, UserRequestMapper requestMapper) {
+        this.queryService = queryService;
+        this.commandService = commandService;
+        this.requestMapper = requestMapper;
+    }
 
-  @GetMapping
-  public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
-      @RequestAttribute("userId") UUID userId) {
-    logger.debug("Getting current user profile");
+    @GetMapping
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@RequestAttribute("userId") UUID userId) {
+        logger.debug("Getting current user profile");
 
-    UserDto user = queryService.getUserById(userId);
+        UserDto user = queryService.getUserById(userId);
 
-    return ResponseEntity.ok(
-        ApiResponse.success("User profile retrieved", UserResponse.from(user)));
-  }
+        return ResponseEntity.ok(ApiResponse.success("User profile retrieved", UserResponse.from(user)));
+    }
 
-  @PatchMapping
-  public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
-      @RequestAttribute("userId") UUID userId, @Valid @RequestBody UpdateProfileRequest request) {
-    logger.info("Updating profile for user: {}", userId);
+    @PatchMapping
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
+            @RequestAttribute("userId") UUID userId, @Valid @RequestBody UpdateProfileRequest request) {
+        logger.info("Updating profile for user: {}", userId);
 
-    UserDto user = commandService.updateProfile(requestMapper.toCommand(userId, request));
+        UserDto user = commandService.updateProfile(requestMapper.toCommand(userId, request));
 
-    return ResponseEntity.ok(
-        ApiResponse.success("Profile updated successfully", UserResponse.from(user)));
-  }
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", UserResponse.from(user)));
+    }
 
-  @PatchMapping("/password")
-  public ResponseEntity<ApiResponse<Void>> changePassword(
-      @RequestAttribute("userId") UUID userId, @Valid @RequestBody ChangePasswordRequest request) {
-    logger.info("Changing password for user: {}", userId);
+    @PatchMapping("/password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @RequestAttribute("userId") UUID userId, @Valid @RequestBody ChangePasswordRequest request) {
+        logger.info("Changing password for user: {}", userId);
 
-    commandService.changePassword(requestMapper.toCommand(userId, request));
+        commandService.changePassword(requestMapper.toCommand(userId, request));
 
-    return ResponseEntity.ok(ApiResponse.success("Password changed successfully"));
-  }
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully"));
+    }
 }

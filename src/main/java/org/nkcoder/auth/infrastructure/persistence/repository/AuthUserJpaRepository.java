@@ -14,11 +14,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AuthUserJpaRepository extends JpaRepository<AuthUserJpaEntity, UUID> {
 
-  Optional<AuthUserJpaEntity> findByEmail(String email);
+    Optional<AuthUserJpaEntity> findByEmail(String email);
 
-  boolean existsByEmail(String email);
+    boolean existsByEmail(String email);
 
-  @Modifying
-  @Query("UPDATE AuthUserJpaEntity u SET u.lastLoginAt = :lastLoginAt WHERE u.id = :id")
-  void updateLastLoginAt(@Param("id") UUID id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
+    @Modifying
+    @Query("UPDATE AuthUserJpaEntity u SET u.lastLoginAt = :lastLoginAt WHERE u.id = :id")
+    void updateLastLoginAt(@Param("id") UUID id, @Param("lastLoginAt") LocalDateTime lastLoginAt);
 }

@@ -29,117 +29,116 @@ import org.nkcoder.user.domain.repository.UserRepository;
 @DisplayName("UserQueryService")
 class UserQueryServiceTest {
 
-  @Mock private UserRepository userRepository;
+    @Mock
+    private UserRepository userRepository;
 
-  private UserQueryService userQueryService;
+    private UserQueryService userQueryService;
 
-  @BeforeEach
-  void setUp() {
-    userQueryService = new UserQueryService(userRepository);
-  }
-
-  private User createTestUser(UUID userId, String email, String name) {
-    return User.reconstitute(
-        UserId.of(userId),
-        Email.of(email),
-        UserName.of(name),
-        UserRole.MEMBER,
-        false,
-        LocalDateTime.now(),
-        LocalDateTime.now(),
-        LocalDateTime.now());
-  }
-
-  @Nested
-  @DisplayName("getUserById")
-  class GetUserById {
-
-    @Test
-    @DisplayName("returns user when found")
-    void returnsUserWhenFound() {
-      UUID userId = UUID.randomUUID();
-      User user = createTestUser(userId, "test@example.com", "Test User");
-
-      given(userRepository.findById(any(UserId.class))).willReturn(Optional.of(user));
-
-      UserDto result = userQueryService.getUserById(userId);
-
-      assertThat(result.id()).isEqualTo(userId);
-      assertThat(result.email()).isEqualTo("test@example.com");
-      assertThat(result.name()).isEqualTo("Test User");
-      assertThat(result.role()).isEqualTo("MEMBER");
+    @BeforeEach
+    void setUp() {
+        userQueryService = new UserQueryService(userRepository);
     }
 
-    @Test
-    @DisplayName("throws ResourceNotFoundException when user not found")
-    void throwsWhenUserNotFound() {
-      UUID userId = UUID.randomUUID();
-
-      given(userRepository.findById(any(UserId.class))).willReturn(Optional.empty());
-
-      assertThatThrownBy(() -> userQueryService.getUserById(userId))
-          .isInstanceOf(ResourceNotFoundException.class)
-          .hasMessageContaining("User not found");
-    }
-  }
-
-  @Nested
-  @DisplayName("getAllUsers")
-  class GetAllUsers {
-
-    @Test
-    @DisplayName("returns all users")
-    void returnsAllUsers() {
-      User user1 = createTestUser(UUID.randomUUID(), "user1@example.com", "User One");
-      User user2 = createTestUser(UUID.randomUUID(), "user2@example.com", "User Two");
-
-      given(userRepository.findAll()).willReturn(List.of(user1, user2));
-
-      List<UserDto> result = userQueryService.getAllUsers();
-
-      assertThat(result).hasSize(2);
-      assertThat(result)
-          .extracting(UserDto::email)
-          .containsExactly("user1@example.com", "user2@example.com");
+    private User createTestUser(UUID userId, String email, String name) {
+        return User.reconstitute(
+                UserId.of(userId),
+                Email.of(email),
+                UserName.of(name),
+                UserRole.MEMBER,
+                false,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                LocalDateTime.now());
     }
 
-    @Test
-    @DisplayName("returns empty list when no users")
-    void returnsEmptyListWhenNoUsers() {
-      given(userRepository.findAll()).willReturn(List.of());
+    @Nested
+    @DisplayName("getUserById")
+    class GetUserById {
 
-      List<UserDto> result = userQueryService.getAllUsers();
+        @Test
+        @DisplayName("returns user when found")
+        void returnsUserWhenFound() {
+            UUID userId = UUID.randomUUID();
+            User user = createTestUser(userId, "test@example.com", "Test User");
 
-      assertThat(result).isEmpty();
+            given(userRepository.findById(any(UserId.class))).willReturn(Optional.of(user));
+
+            UserDto result = userQueryService.getUserById(userId);
+
+            assertThat(result.id()).isEqualTo(userId);
+            assertThat(result.email()).isEqualTo("test@example.com");
+            assertThat(result.name()).isEqualTo("Test User");
+            assertThat(result.role()).isEqualTo("MEMBER");
+        }
+
+        @Test
+        @DisplayName("throws ResourceNotFoundException when user not found")
+        void throwsWhenUserNotFound() {
+            UUID userId = UUID.randomUUID();
+
+            given(userRepository.findById(any(UserId.class))).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> userQueryService.getUserById(userId))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("User not found");
+        }
     }
-  }
 
-  @Nested
-  @DisplayName("userExists")
-  class UserExists {
+    @Nested
+    @DisplayName("getAllUsers")
+    class GetAllUsers {
 
-    @Test
-    @DisplayName("returns true when user exists")
-    void returnsTrueWhenUserExists() {
-      UUID userId = UUID.randomUUID();
+        @Test
+        @DisplayName("returns all users")
+        void returnsAllUsers() {
+            User user1 = createTestUser(UUID.randomUUID(), "user1@example.com", "User One");
+            User user2 = createTestUser(UUID.randomUUID(), "user2@example.com", "User Two");
 
-      given(userRepository.existsById(any(UserId.class))).willReturn(true);
+            given(userRepository.findAll()).willReturn(List.of(user1, user2));
 
-      boolean result = userQueryService.userExists(userId);
+            List<UserDto> result = userQueryService.getAllUsers();
 
-      assertThat(result).isTrue();
+            assertThat(result).hasSize(2);
+            assertThat(result).extracting(UserDto::email).containsExactly("user1@example.com", "user2@example.com");
+        }
+
+        @Test
+        @DisplayName("returns empty list when no users")
+        void returnsEmptyListWhenNoUsers() {
+            given(userRepository.findAll()).willReturn(List.of());
+
+            List<UserDto> result = userQueryService.getAllUsers();
+
+            assertThat(result).isEmpty();
+        }
     }
 
-    @Test
-    @DisplayName("returns false when user does not exist")
-    void returnsFalseWhenUserDoesNotExist() {
-      UUID userId = UUID.randomUUID();
+    @Nested
+    @DisplayName("userExists")
+    class UserExists {
 
-      given(userRepository.existsById(any(UserId.class))).willReturn(false);
+        @Test
+        @DisplayName("returns true when user exists")
+        void returnsTrueWhenUserExists() {
+            UUID userId = UUID.randomUUID();
 
-      boolean result = userQueryService.userExists(userId);
+            given(userRepository.existsById(any(UserId.class))).willReturn(true);
 
-      assertThat(result).isFalse();
+            boolean result = userQueryService.userExists(userId);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false when user does not exist")
+        void returnsFalseWhenUserDoesNotExist() {
+            UUID userId = UUID.randomUUID();
+
+            given(userRepository.existsById(any(UserId.class))).willReturn(false);
+
+            boolean result = userQueryService.userExists(userId);
+
+            assertThat(result).isFalse();
+        }
     }
-  }
 }

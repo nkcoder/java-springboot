@@ -16,69 +16,68 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * Event handler for events from the Auth bounded context. Creates/updates User records in response
- * to Auth domain events.
+ * Event handler for events from the Auth bounded context. Creates/updates User records in response to Auth domain
+ * events.
  */
 @Component
 public class AuthEventHandler {
 
-  private static final Logger logger = LoggerFactory.getLogger(AuthEventHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuthEventHandler.class);
 
-  private final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-  public AuthEventHandler(UserRepository userRepository) {
-    this.userRepository = userRepository;
-  }
-
-  /**
-   * Handles user registration events from Auth context. Creates a corresponding User record in the
-   * User bounded context. Uses AFTER_COMMIT to run in a new transaction after Auth context commits,
-   * avoiding entity conflicts when both contexts map the same table.
-   */
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void handleUserRegistered(UserRegisteredEvent event) {
-    logger.info("Handling user registered event for user: {}", event.userId().value());
-
-    UserId userId = UserId.of(event.userId().value());
-
-    if (userRepository.existsById(userId)) {
-      logger.warn("User already exists, skipping creation: {}", userId);
-      return;
+    public AuthEventHandler(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
-    UserRole role = mapRole(event.role());
-    User user = User.create(userId, event.email(), UserName.of(event.name()), role);
+    /**
+     * Handles user registration events from Auth context. Creates a corresponding User record in the User bounded
+     * context. Uses AFTER_COMMIT to run in a new transaction after Auth context commits, avoiding entity conflicts when
+     * both contexts map the same table.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleUserRegistered(UserRegisteredEvent event) {
+        logger.info(
+                "Handling user registered event for user: {}", event.userId().value());
 
-    userRepository.save(user);
-    logger.info("User created in User context: {}", userId);
-  }
+        UserId userId = UserId.of(event.userId().value());
 
-  /**
-   * Handles user login events from Auth context. Updates the last login timestamp in the User
-   * bounded context. Uses AFTER_COMMIT to run after Auth context commits.
-   */
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void handleUserLoggedIn(UserLoggedInEvent event) {
-    logger.debug("Handling user logged in event for user: {}", event.userId().value());
+        if (userRepository.existsById(userId)) {
+            logger.warn("User already exists, skipping creation: {}", userId);
+            return;
+        }
 
-    UserId userId = UserId.of(event.userId().value());
+        UserRole role = mapRole(event.role());
+        User user = User.create(userId, event.email(), UserName.of(event.name()), role);
 
-    userRepository
-        .findById(userId)
-        .ifPresent(
-            user -> {
-              user.recordLogin();
-              userRepository.save(user);
-              logger.debug("Updated last login for user: {}", userId);
-            });
-  }
+        userRepository.save(user);
+        logger.info("User created in User context: {}", userId);
+    }
 
-  private UserRole mapRole(org.nkcoder.auth.domain.model.AuthRole authRole) {
-    return switch (authRole) {
-      case ADMIN -> UserRole.ADMIN;
-      case MEMBER -> UserRole.MEMBER;
-    };
-  }
+    /**
+     * Handles user login events from Auth context. Updates the last login timestamp in the User bounded context. Uses
+     * AFTER_COMMIT to run after Auth context commits.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleUserLoggedIn(UserLoggedInEvent event) {
+        logger.debug(
+                "Handling user logged in event for user: {}", event.userId().value());
+
+        UserId userId = UserId.of(event.userId().value());
+
+        userRepository.findById(userId).ifPresent(user -> {
+            user.recordLogin();
+            userRepository.save(user);
+            logger.debug("Updated last login for user: {}", userId);
+        });
+    }
+
+    private UserRole mapRole(org.nkcoder.auth.domain.model.AuthRole authRole) {
+        return switch (authRole) {
+            case ADMIN -> UserRole.ADMIN;
+            case MEMBER -> UserRole.MEMBER;
+        };
+    }
 }

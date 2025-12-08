@@ -32,33 +32,31 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private static final String AUTHORIZATION_HEADER = "Authorization";
-  private static final String BEARER_PREFIX = "Bearer ";
-  private static final String ATTRIBUTE_USER_ID = "userId";
-  private static final String ATTRIBUTE_ROLE = "role";
-  private static final String ATTRIBUTE_EMAIL = "email";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String ATTRIBUTE_USER_ID = "userId";
+    private static final String ATTRIBUTE_ROLE = "role";
+    private static final String ATTRIBUTE_EMAIL = "email";
 
-  private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-  private final JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-  @Autowired
-  public JwtAuthenticationFilter(JwtUtil jwtUtil) {
-    this.jwtUtil = jwtUtil;
-  }
+    @Autowired
+    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
-  @Override
-  protected void doFilterInternal(
-      @NotNull HttpServletRequest request,
-      @NotNull HttpServletResponse response,
-      @NotNull FilterChain filterChain)
-      throws ServletException, IOException {
-    logger.debug("Processing authentication for request: {}", request.getRequestURI());
+    @Override
+    protected void doFilterInternal(
+            @NotNull HttpServletRequest request,
+            @NotNull HttpServletResponse response,
+            @NotNull FilterChain filterChain)
+            throws ServletException, IOException {
+        logger.debug("Processing authentication for request: {}", request.getRequestURI());
 
-    extractTokenFromRequest(request)
-        .ifPresent(
-            token -> {
-              try {
+        extractTokenFromRequest(request).ifPresent(token -> {
+            try {
                 Claims claims = jwtUtil.validateAccessToken(token);
 
                 UUID userId = UUID.fromString(claims.getSubject());
@@ -67,15 +65,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 AuthRole role = AuthRole.valueOf(roleString);
 
                 // Create authorities
-                List<GrantedAuthority> authorities =
-                    List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
 
                 UserDetails userDetails = new User(email, "", authorities);
                 UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
 
-                authentication.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request));
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 // Set custom attributes
                 request.setAttribute(ATTRIBUTE_USER_ID, userId);
@@ -85,26 +81,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 logger.debug("Set authentication for userId: {}", userId);
-              } catch (ExpiredJwtException e) {
+            } catch (ExpiredJwtException e) {
                 logger.error("JWT token expired: {}", e.getMessage());
-              } catch (MalformedJwtException e) {
+            } catch (MalformedJwtException e) {
                 logger.error("Malformed JWT token: {}", e.getMessage());
-              } catch (UnsupportedJwtException e) {
+            } catch (UnsupportedJwtException e) {
                 logger.error("Unsupported JWT token: {}", e.getMessage());
-              } catch (SecurityException e) {
+            } catch (SecurityException e) {
                 logger.error("JWT signature validation failed: {}", e.getMessage());
-              } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 logger.error("JWT token compact of handler are invalid: {}", e.getMessage());
-              }
-            });
+            }
+        });
 
-    filterChain.doFilter(request, response);
-  }
+        filterChain.doFilter(request, response);
+    }
 
-  private Optional<String> extractTokenFromRequest(HttpServletRequest request) {
-    return Optional.ofNullable(request.getHeader(AUTHORIZATION_HEADER))
-        .filter(StringUtils::hasText)
-        .filter(token -> token.startsWith(BEARER_PREFIX))
-        .map(token -> token.substring(BEARER_PREFIX.length()));
-  }
+    private Optional<String> extractTokenFromRequest(HttpServletRequest request) {
+        return Optional.ofNullable(request.getHeader(AUTHORIZATION_HEADER))
+                .filter(StringUtils::hasText)
+                .filter(token -> token.startsWith(BEARER_PREFIX))
+                .map(token -> token.substring(BEARER_PREFIX.length()));
+    }
 }

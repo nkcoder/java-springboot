@@ -8,20 +8,21 @@ import org.springframework.stereotype.Component;
 @Component
 public class GrpcAuthMapper {
 
-  public AuthProto.AuthResponse toAuthResponse(AuthResult result) {
-    AuthProto.User grpcUser =
-        AuthProto.User.newBuilder()
-            .setId(result.userId().toString())
-            .setEmail(result.email())
-            .setName("") // Name not available in AuthResult
-            .build();
+    public AuthProto.AuthResponse toAuthResponse(AuthResult result) {
+        AuthProto.User grpcUser = AuthProto.User.newBuilder()
+                .setId(result.userId().toString())
+                .setEmail(result.email())
+                .setName("") // Name not available in AuthResult
+                .build();
 
-    AuthProto.AuthToken grpcTokens =
-        AuthProto.AuthToken.newBuilder()
-            .setAccessToken(result.accessToken())
-            .setRefreshToken(result.refreshToken())
-            .build();
+        AuthProto.AuthToken grpcTokens = AuthProto.AuthToken.newBuilder()
+                .setAccessToken(result.accessToken())
+                .setRefreshToken(result.refreshToken())
+                .build();
 
-    return AuthProto.AuthResponse.newBuilder().setUser(grpcUser).setAuthToken(grpcTokens).build();
-  }
+        return AuthProto.AuthResponse.newBuilder()
+                .setUser(grpcUser)
+                .setAuthToken(grpcTokens)
+                .build();
+    }
 }

@@ -28,57 +28,55 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
-  private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
+    private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
 
-  private final UserQueryService queryService;
-  private final UserCommandService commandService;
-  private final UserRequestMapper requestMapper;
+    private final UserQueryService queryService;
+    private final UserCommandService commandService;
+    private final UserRequestMapper requestMapper;
 
-  public AdminUserController(
-      UserQueryService queryService,
-      UserCommandService commandService,
-      UserRequestMapper requestMapper) {
-    this.queryService = queryService;
-    this.commandService = commandService;
-    this.requestMapper = requestMapper;
-  }
+    public AdminUserController(
+            UserQueryService queryService, UserCommandService commandService, UserRequestMapper requestMapper) {
+        this.queryService = queryService;
+        this.commandService = commandService;
+        this.requestMapper = requestMapper;
+    }
 
-  @GetMapping
-  public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
-    logger.debug("Admin getting all users");
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        logger.debug("Admin getting all users");
 
-    List<UserResponse> users = queryService.getAllUsers().stream().map(UserResponse::from).toList();
+        List<UserResponse> users =
+                queryService.getAllUsers().stream().map(UserResponse::from).toList();
 
-    return ResponseEntity.ok(ApiResponse.success("Users retrieved", users));
-  }
+        return ResponseEntity.ok(ApiResponse.success("Users retrieved", users));
+    }
 
-  @GetMapping("/{userId}")
-  public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID userId) {
-    logger.debug("Admin getting user: {}", userId);
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID userId) {
+        logger.debug("Admin getting user: {}", userId);
 
-    UserDto user = queryService.getUserById(userId);
+        UserDto user = queryService.getUserById(userId);
 
-    return ResponseEntity.ok(ApiResponse.success("User retrieved", UserResponse.from(user)));
-  }
+        return ResponseEntity.ok(ApiResponse.success("User retrieved", UserResponse.from(user)));
+    }
 
-  @PatchMapping("/{userId}")
-  public ResponseEntity<ApiResponse<UserResponse>> updateUser(
-      @PathVariable UUID userId, @Valid @RequestBody AdminUpdateUserRequest request) {
-    logger.info("Admin updating user: {}", userId);
+    @PatchMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
+            @PathVariable UUID userId, @Valid @RequestBody AdminUpdateUserRequest request) {
+        logger.info("Admin updating user: {}", userId);
 
-    UserDto user = commandService.adminUpdateUser(requestMapper.toCommand(userId, request));
+        UserDto user = commandService.adminUpdateUser(requestMapper.toCommand(userId, request));
 
-    return ResponseEntity.ok(
-        ApiResponse.success("User updated successfully", UserResponse.from(user)));
-  }
+        return ResponseEntity.ok(ApiResponse.success("User updated successfully", UserResponse.from(user)));
+    }
 
-  @PatchMapping("/{userId}/password")
-  public ResponseEntity<ApiResponse<Void>> resetPassword(
-      @PathVariable UUID userId, @Valid @RequestBody AdminResetPasswordRequest request) {
-    logger.info("Admin resetting password for user: {}", userId);
+    @PatchMapping("/{userId}/password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @PathVariable UUID userId, @Valid @RequestBody AdminResetPasswordRequest request) {
+        logger.info("Admin resetting password for user: {}", userId);
 
-    commandService.adminResetPassword(requestMapper.toCommand(userId, request));
+        commandService.adminResetPassword(requestMapper.toCommand(userId, request));
 
-    return ResponseEntity.ok(ApiResponse.success("Password reset successfully"));
-  }
+        return ResponseEntity.ok(ApiResponse.success("Password reset successfully"));
+    }
 }

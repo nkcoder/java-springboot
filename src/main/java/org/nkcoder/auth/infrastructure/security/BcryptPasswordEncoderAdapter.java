@@ -9,20 +9,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class BcryptPasswordEncoderAdapter implements PasswordEncoder {
 
-  private static final int BCRYPT_STRENGTH = 12;
-  private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private static final int BCRYPT_STRENGTH = 12;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-  public BcryptPasswordEncoderAdapter() {
-    this.bCryptPasswordEncoder = new BCryptPasswordEncoder(BCRYPT_STRENGTH);
-  }
+    public BcryptPasswordEncoderAdapter() {
+        this.bCryptPasswordEncoder = new BCryptPasswordEncoder(BCRYPT_STRENGTH);
+    }
 
-  @Override
-  public HashedPassword encode(String rawPassword) {
-    return HashedPassword.of(bCryptPasswordEncoder.encode(rawPassword));
-  }
+    @Override
+    public HashedPassword encode(String rawPassword) {
+        return HashedPassword.of(bCryptPasswordEncoder.encode(rawPassword));
+    }
 
-  @Override
-  public boolean matches(String rawPassword, HashedPassword hashedPassword) {
-    return bCryptPasswordEncoder.matches(rawPassword, hashedPassword.value());
-  }
+    @Override
+    public boolean matches(String rawPassword, HashedPassword hashedPassword) {
+        return bCryptPasswordEncoder.matches(rawPassword, hashedPassword.value());
+    }
 }

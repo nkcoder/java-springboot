@@ -139,11 +139,10 @@ spotless {
         removeUnusedImports()
 
         // Choose one formatters: google or palantir
-        googleJavaFormat("1.32.0").reflowLongStrings().formatJavadoc(true)
-
-        leadingTabsToSpaces(1)
+        palantirJavaFormat().formatJavadoc(true)
         formatAnnotations()
         trimTrailingWhitespace()
+        leadingTabsToSpaces(2)
         endWithNewline()
 
         target("src/**/*.java")

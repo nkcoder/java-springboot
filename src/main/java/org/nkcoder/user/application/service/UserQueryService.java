@@ -17,35 +17,34 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class UserQueryService {
 
-  private static final Logger logger = LoggerFactory.getLogger(UserQueryService.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserQueryService.class);
 
-  private final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-  public UserQueryService(UserRepository userRepository) {
-    this.userRepository = userRepository;
-  }
+    public UserQueryService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
-  /** Gets a user by their ID. */
-  public UserDto getUserById(UUID userId) {
-    logger.debug("Getting user by ID: {}", userId);
+    /** Gets a user by their ID. */
+    public UserDto getUserById(UUID userId) {
+        logger.debug("Getting user by ID: {}", userId);
 
-    User user =
-        userRepository
-            .findById(UserId.of(userId))
-            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+        User user = userRepository
+                .findById(UserId.of(userId))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
-    return UserDto.from(user);
-  }
+        return UserDto.from(user);
+    }
 
-  /** Gets all users (admin operation). */
-  public List<UserDto> getAllUsers() {
-    logger.debug("Getting all users");
+    /** Gets all users (admin operation). */
+    public List<UserDto> getAllUsers() {
+        logger.debug("Getting all users");
 
-    return userRepository.findAll().stream().map(UserDto::from).toList();
-  }
+        return userRepository.findAll().stream().map(UserDto::from).toList();
+    }
 
-  /** Checks if a user exists. */
-  public boolean userExists(UUID userId) {
-    return userRepository.existsById(UserId.of(userId));
-  }
+    /** Checks if a user exists. */
+    public boolean userExists(UUID userId) {
+        return userRepository.existsById(UserId.of(userId));
+    }
 }
