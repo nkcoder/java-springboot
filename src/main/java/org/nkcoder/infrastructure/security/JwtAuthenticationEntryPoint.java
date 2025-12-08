@@ -17,46 +17,44 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-  private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationEntryPoint.class);
 
-  private static final String CONTENT_TYPE_JSON = "application/json";
+    private static final String CONTENT_TYPE_JSON = "application/json";
 
-  private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-  @Autowired
-  public JwtAuthenticationEntryPoint(ObjectMapper objectMapper) {
-    this.objectMapper = objectMapper;
-  }
-
-  @Override
-  public void commence(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      AuthenticationException authException)
-      throws IOException {
-
-    logger.debug("Unauthorized access attempt to: {}", request.getRequestURI());
-
-    response.setContentType(CONTENT_TYPE_JSON);
-    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-
-    String errorMessage = determineErrorMessage(authException);
-    ApiResponse<Void> apiResponse = ApiResponse.error(errorMessage);
-
-    objectMapper.writeValue(response.getOutputStream(), apiResponse);
-    response.getOutputStream().flush();
-    // Do NOT close the stream - let the servlet container manage it
-  }
-
-  private String determineErrorMessage(AuthenticationException authException) {
-    if (authException.getCause() instanceof ExpiredJwtException) {
-      return "Token has expired";
+    @Autowired
+    public JwtAuthenticationEntryPoint(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 
-    if (Strings.isNotBlank(authException.getMessage())) {
-      return "Authentication required: " + authException.getMessage();
+    @Override
+    public void commence(
+            HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+            throws IOException {
+
+        logger.debug("Unauthorized access attempt to: {}", request.getRequestURI());
+
+        response.setContentType(CONTENT_TYPE_JSON);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+
+        String errorMessage = determineErrorMessage(authException);
+        ApiResponse<Void> apiResponse = ApiResponse.error(errorMessage);
+
+        objectMapper.writeValue(response.getOutputStream(), apiResponse);
+        response.getOutputStream().flush();
+        // Do NOT close the stream - let the servlet container manage it
     }
 
-    return "Authentication required";
-  }
+    private String determineErrorMessage(AuthenticationException authException) {
+        if (authException.getCause() instanceof ExpiredJwtException) {
+            return "Token has expired";
+        }
+
+        if (Strings.isNotBlank(authException.getMessage())) {
+            return "Authentication required: " + authException.getMessage();
+        }
+
+        return "Authentication required";
+    }
 }

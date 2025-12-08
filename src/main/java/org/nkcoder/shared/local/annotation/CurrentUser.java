@@ -11,9 +11,8 @@ import java.lang.annotation.Target;
  *
  * <p>Usage: {@code public ResponseEntity<?> getMe(@CurrentUser UUID userId)}
  *
- * <p>The userId is extracted from the request attributes set by JwtAuthenticationFilter. If no
- * authenticated user is found, the resolver returns null (let Spring Security handle unauthorized
- * access via security configuration).
+ * <p>The userId is extracted from the request attributes set by JwtAuthenticationFilter. If no authenticated user is
+ * found, the resolver returns null (let Spring Security handle unauthorized access via security configuration).
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

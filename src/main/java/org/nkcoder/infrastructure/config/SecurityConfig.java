@@ -25,87 +25,80 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-  private static final int BCRYPT_STRENGTH = 12;
+    private static final int BCRYPT_STRENGTH = 12;
 
-  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-  private final JwtAuthenticationFilter jwtAuthenticationFilter;
-  private final CorsProperties corsProperties;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorsProperties corsProperties;
 
-  @Autowired
-  public SecurityConfig(
-      JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
-      JwtAuthenticationFilter jwtAuthenticationFilter,
-      CorsProperties corsProperties) {
-    this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
-    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    this.corsProperties = corsProperties;
-  }
+    @Autowired
+    public SecurityConfig(
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            CorsProperties corsProperties) {
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.corsProperties = corsProperties;
+    }
 
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder(BCRYPT_STRENGTH);
-  }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(BCRYPT_STRENGTH);
+    }
 
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(AbstractHttpConfigurer::disable)
-        .requestCache(RequestCacheConfigurer::disable)
-        .sessionManagement(
-            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .headers(
-            headers ->
-                headers
-                    .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
-                    .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny))
-        .authorizeHttpRequests(
-            auth ->
-                auth
-                    // Public auth endpoints
-                    .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh")
-                    .permitAll()
-                    // Actuator and health endpoints
-                    .requestMatchers("/actuator/health", "/actuator/info")
-                    .permitAll()
-                    .requestMatchers("/health")
-                    .permitAll()
-                    // Swagger/OpenAPI endpoints
-                    .requestMatchers(
-                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**")
-                    .permitAll()
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .requestCache(RequestCacheConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny))
+                .authorizeHttpRequests(auth -> auth
+                        // Public auth endpoints
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh")
+                        .permitAll()
+                        // Actuator and health endpoints
+                        .requestMatchers("/actuator/health", "/actuator/info")
+                        .permitAll()
+                        .requestMatchers("/health")
+                        .permitAll()
+                        // Swagger/OpenAPI endpoints
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**")
+                        .permitAll()
 
-                    // Authenticated logout endpoints
-                    .requestMatchers("/api/auth/logout", "/api/auth/logout-single")
-                    .authenticated()
+                        // Authenticated logout endpoints
+                        .requestMatchers("/api/auth/logout", "/api/auth/logout-single")
+                        .authenticated()
 
-                    // Protected user profile endpoints
-                    .requestMatchers("/api/users/me", "/api/users/me/**")
-                    .authenticated()
+                        // Protected user profile endpoints
+                        .requestMatchers("/api/users/me", "/api/users/me/**")
+                        .authenticated()
 
-                    // Admin endpoints
-                    .requestMatchers("/api/admin/users/**")
-                    .hasRole("ADMIN")
+                        // Admin endpoints
+                        .requestMatchers("/api/admin/users/**")
+                        .hasRole("ADMIN")
 
-                    // All other requests require authentication
-                    .anyRequest()
-                    .authenticated())
-        .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        // All other requests require authentication
+                        .anyRequest()
+                        .authenticated())
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-    return http.build();
-  }
+        return http.build();
+    }
 
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
-    configuration.setAllowedMethods(corsProperties.allowedMethods());
-    configuration.setAllowedHeaders(corsProperties.allowedHeaders());
-    configuration.setAllowCredentials(corsProperties.allowCredentials());
-    configuration.setMaxAge(corsProperties.maxAge());
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(corsProperties.allowedOrigins());
+        configuration.setAllowedMethods(corsProperties.allowedMethods());
+        configuration.setAllowedHeaders(corsProperties.allowedHeaders());
+        configuration.setAllowCredentials(corsProperties.allowCredentials());
+        configuration.setMaxAge(corsProperties.maxAge());
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return source;
-  }
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }

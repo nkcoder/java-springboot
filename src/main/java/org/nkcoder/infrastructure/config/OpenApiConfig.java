@@ -14,34 +14,29 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
 
-  @Bean
-  public OpenAPI userServiceOpenAPI() {
-    return new OpenAPI()
-        .info(
-            new Info()
-                .title("User Service API")
-                .description("User authentication and management service")
-                .version("v0.1.0")
-                .contact(
-                    new Contact()
-                        .name("Development Team")
-                        .email("dev@nkcoder.com")
-                        .url("https://github.com/java-springboot"))
-                .license(
-                    new License().name("ISC License").url("https://opensource.org/licenses/ISC")))
-        .servers(
-            List.of(
-                new Server().url("http://localhost:3001").description("Development server"),
-                new Server().url("https://api.nkcoder.com").description("Production server")))
-        .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
-        .components(
-            new io.swagger.v3.oas.models.Components()
-                .addSecuritySchemes(
-                    "Bearer Authentication",
-                    new SecurityScheme()
-                        .type(SecurityScheme.Type.HTTP)
-                        .scheme("bearer")
-                        .bearerFormat("JWT")
-                        .description("JWT token for authentication")));
-  }
+    @Bean
+    public OpenAPI userServiceOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("User Service API")
+                        .description("User authentication and management service")
+                        .version("v0.1.0")
+                        .contact(new Contact()
+                                .name("Development Team")
+                                .email("dev@nkcoder.com")
+                                .url("https://github.com/java-springboot"))
+                        .license(new License().name("ISC License").url("https://opensource.org/licenses/ISC")))
+                .servers(List.of(
+                        new Server().url("http://localhost:3001").description("Development server"),
+                        new Server().url("https://api.nkcoder.com").description("Production server")))
+                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+                .components(new io.swagger.v3.oas.models.Components()
+                        .addSecuritySchemes(
+                                "Bearer Authentication",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                                        .description("JWT token for authentication")));
+    }
 }

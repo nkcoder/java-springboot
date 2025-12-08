@@ -8,14 +8,14 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-  private final CurrentUserArgumentResolver currentUserArgumentResolver;
+    private final CurrentUserArgumentResolver currentUserArgumentResolver;
 
-  public WebConfig(CurrentUserArgumentResolver currentUserArgumentResolver) {
-    this.currentUserArgumentResolver = currentUserArgumentResolver;
-  }
+    public WebConfig(CurrentUserArgumentResolver currentUserArgumentResolver) {
+        this.currentUserArgumentResolver = currentUserArgumentResolver;
+    }
 
-  @Override
-  public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-    resolvers.add(currentUserArgumentResolver);
-  }
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(currentUserArgumentResolver);
+    }
 }

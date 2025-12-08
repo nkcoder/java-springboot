@@ -16,25 +16,25 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RefreshTokenJpaRepository extends JpaRepository<RefreshTokenJpaEntity, UUID> {
 
-  Optional<RefreshTokenJpaEntity> findByToken(String token);
+    Optional<RefreshTokenJpaEntity> findByToken(String token);
 
-  @Lock(LockModeType.PESSIMISTIC_WRITE)
-  @Query("SELECT r FROM RefreshTokenJpaEntity r WHERE r.token = :token")
-  Optional<RefreshTokenJpaEntity> findByTokenForUpdate(@Param("token") String token);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM RefreshTokenJpaEntity r WHERE r.token = :token")
+    Optional<RefreshTokenJpaEntity> findByTokenForUpdate(@Param("token") String token);
 
-  @Modifying
-  @Query("DELETE FROM RefreshTokenJpaEntity r WHERE r.token = :token")
-  void deleteByToken(@Param("token") String token);
+    @Modifying
+    @Query("DELETE FROM RefreshTokenJpaEntity r WHERE r.token = :token")
+    void deleteByToken(@Param("token") String token);
 
-  @Modifying
-  @Query("DELETE FROM RefreshTokenJpaEntity r WHERE r.tokenFamily = :tokenFamily")
-  void deleteByTokenFamily(@Param("tokenFamily") String tokenFamily);
+    @Modifying
+    @Query("DELETE FROM RefreshTokenJpaEntity r WHERE r.tokenFamily = :tokenFamily")
+    void deleteByTokenFamily(@Param("tokenFamily") String tokenFamily);
 
-  @Modifying
-  @Query("DELETE FROM RefreshTokenJpaEntity r WHERE r.userId = :userId")
-  void deleteByUserId(@Param("userId") UUID userId);
+    @Modifying
+    @Query("DELETE FROM RefreshTokenJpaEntity r WHERE r.userId = :userId")
+    void deleteByUserId(@Param("userId") UUID userId);
 
-  @Modifying
-  @Query("DELETE FROM RefreshTokenJpaEntity r WHERE r.expiresAt < :now")
-  void deleteExpiredTokens(@Param("now") LocalDateTime now);
+    @Modifying
+    @Query("DELETE FROM RefreshTokenJpaEntity r WHERE r.expiresAt < :now")
+    void deleteExpiredTokens(@Param("now") LocalDateTime now);
 }

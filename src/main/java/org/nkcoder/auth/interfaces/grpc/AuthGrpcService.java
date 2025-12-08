@@ -19,95 +19,88 @@ import org.slf4j.LoggerFactory;
 @GrpcService
 public class AuthGrpcService extends AuthServiceGrpc.AuthServiceImplBase {
 
-  private static final Logger logger = LoggerFactory.getLogger(AuthGrpcService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuthGrpcService.class);
 
-  private final AuthApplicationService authService;
-  private final GrpcAuthMapper mapper;
+    private final AuthApplicationService authService;
+    private final GrpcAuthMapper mapper;
 
-  public AuthGrpcService(AuthApplicationService authService, GrpcAuthMapper mapper) {
-    this.authService = authService;
-    this.mapper = mapper;
-  }
-
-  @Override
-  public void register(
-      AuthProto.RegisterRequest request, StreamObserver<AuthProto.ApiResponse> responseObserver) {
-    logger.info("Received gRPC registration request for email: {}", request.getEmail());
-
-    if (request.getEmail().isEmpty()
-        || request.getPassword().isEmpty()
-        || request.getName().isEmpty()) {
-      logger.error("Invalid registration request: email, password, and name must not be empty");
-      responseObserver.onError(
-          Status.INVALID_ARGUMENT
-              .withDescription("Email, password, and name must not be empty")
-              .asRuntimeException());
-      return;
+    public AuthGrpcService(AuthApplicationService authService, GrpcAuthMapper mapper) {
+        this.authService = authService;
+        this.mapper = mapper;
     }
 
-    try {
-      RegisterCommand command =
-          new RegisterCommand(
-              request.getEmail(), request.getPassword(), request.getName(), AuthRole.MEMBER);
+    @Override
+    public void register(AuthProto.RegisterRequest request, StreamObserver<AuthProto.ApiResponse> responseObserver) {
+        logger.info("Received gRPC registration request for email: {}", request.getEmail());
 
-      AuthResult result = authService.register(command);
+        if (request.getEmail().isEmpty()
+                || request.getPassword().isEmpty()
+                || request.getName().isEmpty()) {
+            logger.error("Invalid registration request: email, password, and name must not be empty");
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Email, password, and name must not be empty")
+                    .asRuntimeException());
+            return;
+        }
 
-      AuthProto.ApiResponse apiResponse =
-          AuthProto.ApiResponse.newBuilder()
-              .setMessage("User registered successfully")
-              .setData(mapper.toAuthResponse(result))
-              .build();
+        try {
+            RegisterCommand command =
+                    new RegisterCommand(request.getEmail(), request.getPassword(), request.getName(), AuthRole.MEMBER);
 
-      responseObserver.onNext(apiResponse);
-      responseObserver.onCompleted();
+            AuthResult result = authService.register(command);
 
-    } catch (ValidationException e) {
-      logger.error("Registration validation error: {}", e.getMessage());
-      responseObserver.onError(
-          Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException());
-    } catch (Exception e) {
-      logger.error("Registration error: {}", e.getMessage(), e);
-      responseObserver.onError(
-          Status.INTERNAL.withDescription("Internal server error").asRuntimeException());
-    }
-  }
+            AuthProto.ApiResponse apiResponse = AuthProto.ApiResponse.newBuilder()
+                    .setMessage("User registered successfully")
+                    .setData(mapper.toAuthResponse(result))
+                    .build();
 
-  @Override
-  public void login(
-      AuthProto.LoginRequest request, StreamObserver<AuthProto.ApiResponse> responseObserver) {
-    logger.info("Received gRPC login request for email: {}", request.getEmail());
+            responseObserver.onNext(apiResponse);
+            responseObserver.onCompleted();
 
-    if (request.getEmail().isEmpty() || request.getPassword().isEmpty()) {
-      logger.error("Invalid login request: email and password must not be empty");
-      responseObserver.onError(
-          Status.INVALID_ARGUMENT
-              .withDescription("Email and password must not be empty")
-              .asRuntimeException());
-      return;
+        } catch (ValidationException e) {
+            logger.error("Registration validation error: {}", e.getMessage());
+            responseObserver.onError(
+                    Status.ALREADY_EXISTS.withDescription(e.getMessage()).asRuntimeException());
+        } catch (Exception e) {
+            logger.error("Registration error: {}", e.getMessage(), e);
+            responseObserver.onError(
+                    Status.INTERNAL.withDescription("Internal server error").asRuntimeException());
+        }
     }
 
-    try {
-      LoginCommand command = new LoginCommand(request.getEmail(), request.getPassword());
+    @Override
+    public void login(AuthProto.LoginRequest request, StreamObserver<AuthProto.ApiResponse> responseObserver) {
+        logger.info("Received gRPC login request for email: {}", request.getEmail());
 
-      AuthResult result = authService.login(command);
+        if (request.getEmail().isEmpty() || request.getPassword().isEmpty()) {
+            logger.error("Invalid login request: email and password must not be empty");
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Email and password must not be empty")
+                    .asRuntimeException());
+            return;
+        }
 
-      AuthProto.ApiResponse apiResponse =
-          AuthProto.ApiResponse.newBuilder()
-              .setMessage("User logged in successfully")
-              .setData(mapper.toAuthResponse(result))
-              .build();
+        try {
+            LoginCommand command = new LoginCommand(request.getEmail(), request.getPassword());
 
-      responseObserver.onNext(apiResponse);
-      responseObserver.onCompleted();
+            AuthResult result = authService.login(command);
 
-    } catch (AuthenticationException e) {
-      logger.error("Login authentication error: {}", e.getMessage());
-      responseObserver.onError(
-          Status.UNAUTHENTICATED.withDescription(e.getMessage()).asRuntimeException());
-    } catch (Exception e) {
-      logger.error("Login error: {}", e.getMessage(), e);
-      responseObserver.onError(
-          Status.INTERNAL.withDescription("Internal server error").asRuntimeException());
+            AuthProto.ApiResponse apiResponse = AuthProto.ApiResponse.newBuilder()
+                    .setMessage("User logged in successfully")
+                    .setData(mapper.toAuthResponse(result))
+                    .build();
+
+            responseObserver.onNext(apiResponse);
+            responseObserver.onCompleted();
+
+        } catch (AuthenticationException e) {
+            logger.error("Login authentication error: {}", e.getMessage());
+            responseObserver.onError(
+                    Status.UNAUTHENTICATED.withDescription(e.getMessage()).asRuntimeException());
+        } catch (Exception e) {
+            logger.error("Login error: {}", e.getMessage(), e);
+            responseObserver.onError(
+                    Status.INTERNAL.withDescription("Internal server error").asRuntimeException());
+        }
     }
-  }
 }

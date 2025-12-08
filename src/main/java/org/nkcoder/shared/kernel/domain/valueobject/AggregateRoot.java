@@ -12,23 +12,23 @@ import org.nkcoder.shared.kernel.domain.event.DomainEvent;
  */
 public abstract class AggregateRoot<ID> {
 
-  private final List<DomainEvent> domainEvents = new ArrayList<>();
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
 
-  /** Returns the unique identifier of this aggregate root. */
-  public abstract ID getId();
+    /** Returns the unique identifier of this aggregate root. */
+    public abstract ID getId();
 
-  /** Registers a domain event to be published after the aggregate is persisted. */
-  protected void registerEvent(DomainEvent event) {
-    domainEvents.add(event);
-  }
+    /** Registers a domain event to be published after the aggregate is persisted. */
+    protected void registerEvent(DomainEvent event) {
+        domainEvents.add(event);
+    }
 
-  /** Returns an unmodifiable view of the registered domain events. */
-  public List<DomainEvent> getDomainEvents() {
-    return Collections.unmodifiableList(domainEvents);
-  }
+    /** Returns an unmodifiable view of the registered domain events. */
+    public List<DomainEvent> getDomainEvents() {
+        return Collections.unmodifiableList(domainEvents);
+    }
 
-  /** Clears all registered domain events. Should be called after events are published. */
-  public void clearDomainEvents() {
-    domainEvents.clear();
-  }
+    /** Clears all registered domain events. Should be called after events are published. */
+    public void clearDomainEvents() {
+        domainEvents.clear();
+    }
 }

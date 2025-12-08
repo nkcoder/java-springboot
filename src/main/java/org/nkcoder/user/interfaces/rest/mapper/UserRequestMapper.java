@@ -15,19 +15,19 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserRequestMapper {
 
-  public UpdateProfileCommand toCommand(UUID userId, UpdateProfileRequest request) {
-    return new UpdateProfileCommand(userId, request.name());
-  }
+    public UpdateProfileCommand toCommand(UUID userId, UpdateProfileRequest request) {
+        return new UpdateProfileCommand(userId, request.name());
+    }
 
-  public ChangePasswordCommand toCommand(UUID userId, ChangePasswordRequest request) {
-    return new ChangePasswordCommand(userId, request.currentPassword(), request.newPassword());
-  }
+    public ChangePasswordCommand toCommand(UUID userId, ChangePasswordRequest request) {
+        return new ChangePasswordCommand(userId, request.currentPassword(), request.newPassword());
+    }
 
-  public AdminUpdateUserCommand toCommand(UUID targetUserId, AdminUpdateUserRequest request) {
-    return new AdminUpdateUserCommand(targetUserId, request.name(), request.email());
-  }
+    public AdminUpdateUserCommand toCommand(UUID targetUserId, AdminUpdateUserRequest request) {
+        return new AdminUpdateUserCommand(targetUserId, request.name(), request.email());
+    }
 
-  public AdminResetPasswordCommand toCommand(UUID targetUserId, AdminResetPasswordRequest request) {
-    return new AdminResetPasswordCommand(targetUserId, request.newPassword());
-  }
+    public AdminResetPasswordCommand toCommand(UUID targetUserId, AdminResetPasswordRequest request) {
+        return new AdminResetPasswordCommand(targetUserId, request.newPassword());
+    }
 }

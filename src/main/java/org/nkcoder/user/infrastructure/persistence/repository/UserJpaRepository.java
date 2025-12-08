@@ -12,11 +12,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserJpaRepository extends JpaRepository<UserJpaEntity, UUID> {
 
-  Optional<UserJpaEntity> findByEmail(String email);
+    Optional<UserJpaEntity> findByEmail(String email);
 
-  @Query("SELECT COUNT(u) > 0 FROM UserJpaEntity u WHERE u.email = :email AND u.id != :excludeId")
-  boolean existsByEmailExcludingId(
-      @Param("email") String email, @Param("excludeId") UUID excludeId);
+    @Query("SELECT COUNT(u) > 0 FROM UserJpaEntity u WHERE u.email = :email AND u.id != :excludeId")
+    boolean existsByEmailExcludingId(@Param("email") String email, @Param("excludeId") UUID excludeId);
 
-  boolean existsByEmail(String email);
+    boolean existsByEmail(String email);
 }

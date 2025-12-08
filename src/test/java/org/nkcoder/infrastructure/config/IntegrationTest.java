@@ -11,9 +11,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Note: @SpringBootTest performs full component scanning and will include the {@link
- * JpaAuditingConfig} and enable JPA auditing. So don't add @EnableJPAAuditing on this annotation,
- * otherwise it will be registered multiple times during AOT processing.
+ * Note: @SpringBootTest performs full component scanning and will include the {@link JpaAuditingConfig} and enable JPA
+ * auditing. So don't add @EnableJPAAuditing on this annotation, otherwise it will be registered multiple times during
+ * AOT processing.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

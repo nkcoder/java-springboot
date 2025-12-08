@@ -12,15 +12,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthRequestMapper {
 
-  public RegisterCommand toCommand(RegisterRequest request) {
-    return new RegisterCommand(request.email(), request.password(), request.name(), request.role());
-  }
+    public RegisterCommand toCommand(RegisterRequest request) {
+        return new RegisterCommand(request.email(), request.password(), request.name(), request.role());
+    }
 
-  public LoginCommand toCommand(LoginRequest request) {
-    return new LoginCommand(request.email(), request.password());
-  }
+    public LoginCommand toCommand(LoginRequest request) {
+        return new LoginCommand(request.email(), request.password());
+    }
 
-  public RefreshTokenCommand toCommand(RefreshTokenRequest request) {
-    return new RefreshTokenCommand(request.refreshToken());
-  }
+    public RefreshTokenCommand toCommand(RefreshTokenRequest request) {
+        return new RefreshTokenCommand(request.refreshToken());
+    }
 }

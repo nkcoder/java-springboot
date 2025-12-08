@@ -11,33 +11,33 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserPersistenceMapper {
 
-  public User toDomain(UserJpaEntity entity) {
-    return User.reconstitute(
-        UserId.of(entity.getId()),
-        Email.of(entity.getEmail()),
-        UserName.of(entity.getName()),
-        entity.getRole(),
-        entity.isEmailVerified(),
-        entity.getLastLoginAt(),
-        entity.getCreatedAt(),
-        entity.getUpdatedAt());
-  }
+    public User toDomain(UserJpaEntity entity) {
+        return User.reconstitute(
+                UserId.of(entity.getId()),
+                Email.of(entity.getEmail()),
+                UserName.of(entity.getName()),
+                entity.getRole(),
+                entity.isEmailVerified(),
+                entity.getLastLoginAt(),
+                entity.getCreatedAt(),
+                entity.getUpdatedAt());
+    }
 
-  public UserJpaEntity toEntity(User user) {
-    return new UserJpaEntity(
-        user.getId().value(),
-        user.getEmail().value(),
-        user.getName().value(),
-        user.getRole(),
-        user.isEmailVerified(),
-        user.getLastLoginAt(),
-        user.getCreatedAt(),
-        user.getUpdatedAt());
-  }
+    public UserJpaEntity toEntity(User user) {
+        return new UserJpaEntity(
+                user.getId().value(),
+                user.getEmail().value(),
+                user.getName().value(),
+                user.getRole(),
+                user.isEmailVerified(),
+                user.getLastLoginAt(),
+                user.getCreatedAt(),
+                user.getUpdatedAt());
+    }
 
-  public UserJpaEntity toNewEntity(User user) {
-    UserJpaEntity entity = toEntity(user);
-    entity.markAsNew();
-    return entity;
-  }
+    public UserJpaEntity toNewEntity(User user) {
+        UserJpaEntity entity = toEntity(user);
+        entity.markAsNew();
+        return entity;
+    }
 }

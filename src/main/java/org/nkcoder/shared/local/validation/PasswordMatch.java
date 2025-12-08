@@ -9,13 +9,13 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PasswordMatch {
-  String message() default "New password and confirmation password do not match";
+    String message() default "New password and confirmation password do not match";
 
-  Class<?>[] groups() default {};
+    Class<?>[] groups() default {};
 
-  Class<? extends Payload>[] payload() default {};
+    Class<? extends Payload>[] payload() default {};
 
-  String passwordField() default "newPassword";
+    String passwordField() default "newPassword";
 
-  String confirmField() default "confirmPassword";
+    String confirmField() default "confirmPassword";
 }
