@@ -7,19 +7,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.nkcoder.config.IntegrationTest;
-import org.nkcoder.dto.auth.AuthResponse;
-import org.nkcoder.dto.auth.AuthTokens;
-import org.nkcoder.dto.user.UserResponse;
-import org.nkcoder.enums.Role;
-import org.nkcoder.service.AuthService;
-import org.nkcoder.service.UserService;
-import org.nkcoder.util.JwtUtil;
+import org.nkcoder.auth.application.dto.response.AuthResult;
+import org.nkcoder.auth.application.service.AuthApplicationService;
+import org.nkcoder.auth.domain.model.AuthRole;
+import org.nkcoder.auth.infrastructure.security.JwtUtil;
+import org.nkcoder.infrastructure.config.IntegrationTest;
+import org.nkcoder.user.application.service.UserCommandService;
+import org.nkcoder.user.application.service.UserQueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -37,9 +35,11 @@ public class AuthControllerIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @MockitoBean private AuthService authService;
+  @MockitoBean private AuthApplicationService authService;
 
-  @MockitoBean private UserService userService;
+  @MockitoBean private UserQueryService userQueryService;
+
+  @MockitoBean private UserCommandService userCommandService;
 
   @MockitoBean private JwtUtil jwtUtil;
 
@@ -50,12 +50,12 @@ public class AuthControllerIntegrationTest {
     @Test
     @DisplayName("register endpoint is accessible without authentication")
     void registerIsPublic() throws Exception {
-      AuthResponse authResponse = createAuthResponse();
-      given(authService.register(any())).willReturn(authResponse);
+      AuthResult authResult = createAuthResult();
+      given(authService.register(any())).willReturn(authResult);
 
       mockMvc
           .perform(
-              post("/api/users/auth/register")
+              post("/api/auth/register")
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(
                       """
@@ -72,12 +72,12 @@ public class AuthControllerIntegrationTest {
     @Test
     @DisplayName("login endpoint is accessible without authentication")
     void loginIsPublic() throws Exception {
-      AuthResponse response = createAuthResponse();
-      given(authService.login(any())).willReturn(response);
+      AuthResult authResult = createAuthResult();
+      given(authService.login(any())).willReturn(authResult);
 
       mockMvc
           .perform(
-              post("/api/users/auth/login")
+              post("/api/auth/login")
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(
                       """
@@ -92,12 +92,12 @@ public class AuthControllerIntegrationTest {
     @Test
     @DisplayName("refresh endpoint is accessible without authentication")
     void refreshIsPublic() throws Exception {
-      AuthResponse response = createAuthResponse();
-      given(authService.refreshTokens(any())).willReturn(response);
+      AuthResult authResult = createAuthResult();
+      given(authService.refreshTokens(any())).willReturn(authResult);
 
       mockMvc
           .perform(
-              post("/api/users/auth/refresh")
+              post("/api/auth/refresh")
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(
                       """
@@ -179,17 +179,8 @@ public class AuthControllerIntegrationTest {
     }
   }
 
-  private AuthResponse createAuthResponse() {
-    return new AuthResponse(
-        new UserResponse(
-            UUID.randomUUID(),
-            "test@example.com",
-            "Test User",
-            Role.MEMBER,
-            false,
-            LocalDateTime.now(),
-            LocalDateTime.now(),
-            LocalDateTime.now()),
-        new AuthTokens("access-token", "refresh-token"));
+  private AuthResult createAuthResult() {
+    return new AuthResult(
+        UUID.randomUUID(), "test@example.com", AuthRole.MEMBER, "access-token", "refresh-token");
   }
 }

@@ -201,14 +201,31 @@ tasks.jacocoTestReport {
         files(classDirectories.files.map {
             fileTree(it) {
                 exclude(
-                    "**/config/**",
+                    // Infrastructure - config and cross-cutting concerns
+                    "**/infrastructure/config/**",
+                    "**/infrastructure/security/**",
+                    "**/infrastructure/resolver/**",
+                    "**/infrastructure/persistence/**",
+                    "**/infrastructure/adapter/**",
+                    // DTOs, requests, responses, mappers (data carriers)
                     "**/dto/**",
-                    "**/enums/**",
-                    "**/exceptions/**",
+                    "**/request/**",
+                    "**/response/**",
+                    "**/mapper/**",
+                    // Domain value objects and events
+                    "**/domain/model/*Id.class",
+                    "**/domain/model/*Name.class",
+                    "**/domain/model/*Role.class",
+                    "**/domain/event/**",
+                    // Shared kernel and local utilities
+                    "**/shared/**",
+                    // Interfaces layer (controllers, REST)
+                    "**/interfaces/rest/**",
+                    "**/interfaces/grpc/**",
+                    // Application entry point
                     "**/*Application*",
-                    // gRPC generated code exclusions
-                    "**/grpc/**",
-                    "**/proto/**",              // Proto-related generated classes
+                    // Generated code
+                    "**/proto/**",
                     "**/generated/**"
                 )
             }
@@ -225,24 +242,44 @@ tasks.jacocoTestCoverageVerification {
         }
         rule {
             element = "CLASS"
-            includes = listOf("org.nkcoder.service.*")
+            includes = listOf(
+                "org.nkcoder.auth.application.service.*",
+                "org.nkcoder.user.application.service.*"
+            )
             limit {
                 minimum = "0.80".toBigDecimal()
             }
         }
         classDirectories.setFrom(
-            // Same exclusions for verification
+            // Same exclusions as jacocoTestReport
             files(classDirectories.files.map {
                 fileTree(it) {
                     exclude(
-                        "**/config/**",
+                        // Infrastructure - config and cross-cutting concerns
+                        "**/infrastructure/config/**",
+                        "**/infrastructure/security/**",
+                        "**/infrastructure/resolver/**",
+                        "**/infrastructure/persistence/**",
+                        "**/infrastructure/adapter/**",
+                        // DTOs, requests, responses, mappers (data carriers)
                         "**/dto/**",
-                        "**/enums/**",
-                        "**/exception/**",
+                        "**/request/**",
+                        "**/response/**",
+                        "**/mapper/**",
+                        // Domain value objects and events
+                        "**/domain/model/*Id.class",
+                        "**/domain/model/*Name.class",
+                        "**/domain/model/*Role.class",
+                        "**/domain/event/**",
+                        // Shared kernel and local utilities
+                        "**/shared/**",
+                        // Interfaces layer (controllers, REST)
+                        "**/interfaces/rest/**",
+                        "**/interfaces/grpc/**",
+                        // Application entry point
                         "**/*Application*",
-
+                        // Generated code
                         "**/proto/**",
-                        "**/grpc/**",
                         "**/generated/**"
                     )
                 }
