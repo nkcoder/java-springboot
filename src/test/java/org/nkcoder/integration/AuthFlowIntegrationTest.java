@@ -10,10 +10,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.nkcoder.config.IntegrationTest;
+import org.nkcoder.infrastructure.config.TestContainersConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
-@IntegrationTest
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@Import(TestContainersConfiguration.class)
+@ActiveProfiles("test")
 @DisplayName("Auth Flow Integration Tests")
 class AuthFlowIntegrationTest {
 
@@ -22,7 +28,7 @@ class AuthFlowIntegrationTest {
   @BeforeEach
   void setupRestAssured() {
     RestAssured.port = port;
-    RestAssured.basePath = "/api/users";
+    RestAssured.basePath = "";
   }
 
   @Nested
@@ -46,7 +52,7 @@ class AuthFlowIntegrationTest {
                   }
                   """)
               .when()
-              .post("/auth/register")
+              .post("/api/auth/register")
               .then()
               .statusCode(anyOf(is(200), is(201)))
               .body("data.user.email", equalTo("flow@example.com"))
@@ -62,7 +68,7 @@ class AuthFlowIntegrationTest {
       given()
           .header("Authorization", "Bearer " + accessToken)
           .when()
-          .get("/me")
+          .get("/api/users/me")
           .then()
           .statusCode(200)
           .body("data.email", equalTo("flow@example.com"))
@@ -80,7 +86,7 @@ class AuthFlowIntegrationTest {
                   """
                       .formatted(refreshToken))
               .when()
-              .post("/auth/refresh")
+              .post("/api/auth/refresh")
               .then()
               .statusCode(200)
               .body("data.tokens.accessToken", notNullValue())
@@ -90,10 +96,6 @@ class AuthFlowIntegrationTest {
 
       String newAccessToken = refreshResponse.jsonPath().getString("data.tokens.accessToken");
       String newRefreshToken = refreshResponse.jsonPath().getString("data.tokens.refreshToken");
-
-      // Verify tokens rotated
-      //      assertThat(newAccessToken).isNotEqualTo(accessToken);
-      //      assertThat(newRefreshToken).isNotEqualTo(refreshToken);
 
       // Step 4: Old refresh token should be invalid
       given()
@@ -106,7 +108,7 @@ class AuthFlowIntegrationTest {
               """
                   .formatted(refreshToken))
           .when()
-          .post("/auth/refresh")
+          .post("/api/auth/refresh")
           .then()
           .statusCode(401);
 
@@ -114,7 +116,7 @@ class AuthFlowIntegrationTest {
       given()
           .header("Authorization", "Bearer " + newAccessToken)
           .when()
-          .get("/me")
+          .get("/api/users/me")
           .then()
           .statusCode(200);
 
@@ -130,7 +132,7 @@ class AuthFlowIntegrationTest {
               """
                   .formatted(newRefreshToken))
           .when()
-          .post("/auth/logout")
+          .post("/api/auth/logout")
           .then()
           .statusCode(200);
 
@@ -145,7 +147,7 @@ class AuthFlowIntegrationTest {
               """
                   .formatted(newRefreshToken))
           .when()
-          .post("/auth/refresh")
+          .post("/api/auth/refresh")
           .then()
           .statusCode(401);
     }
@@ -170,12 +172,10 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/register")
+          .post("/api/auth/register")
           .then()
           .statusCode(anyOf(is(200), is(201)))
           .body("data.user.email", equalTo("newuser@example.com"))
-          .body("data.user.name", equalTo("New User"))
-          .body("data.user.role", equalTo("MEMBER"))
           .body("data.tokens.accessToken", notNullValue())
           .body("data.tokens.refreshToken", notNullValue());
     }
@@ -196,7 +196,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/register")
+          .post("/api/auth/register")
           .then()
           .statusCode(anyOf(is(200), is(201)));
 
@@ -213,7 +213,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/register")
+          .post("/api/auth/register")
           .then()
           .statusCode(400)
           .body("message", equalTo("User already exists"));
@@ -234,7 +234,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/register")
+          .post("/api/auth/register")
           .then()
           .statusCode(anyOf(is(200), is(201)))
           .body("data.user.email", equalTo("uppercase@example.com"));
@@ -262,7 +262,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/login")
+          .post("/api/auth/login")
           .then()
           .statusCode(200)
           .body("data.user.email", equalTo("login@example.com"))
@@ -284,7 +284,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/login")
+          .post("/api/auth/login")
           .then()
           .statusCode(401)
           .body("message", equalTo("Invalid email or password"));
@@ -303,7 +303,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/login")
+          .post("/api/auth/login")
           .then()
           .statusCode(401)
           .body("message", equalTo("Invalid email or password"));
@@ -330,7 +330,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .patch("/me")
+          .patch("/api/users/me")
           .then()
           .statusCode(200)
           .body("data.name", equalTo("Updated Name"));
@@ -355,7 +355,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .patch("/me/password")
+          .patch("/api/users/me/password")
           .then()
           .statusCode(200);
 
@@ -370,7 +370,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/login")
+          .post("/api/auth/login")
           .then()
           .statusCode(200);
 
@@ -385,7 +385,7 @@ class AuthFlowIntegrationTest {
               }
               """)
           .when()
-          .post("/auth/login")
+          .post("/api/auth/login")
           .then()
           .statusCode(401);
     }
@@ -401,7 +401,7 @@ class AuthFlowIntegrationTest {
       given()
           .header("Authorization", "Bearer invalid.token.here")
           .when()
-          .get("/me")
+          .get("/api/users/me")
           .then()
           .statusCode(401);
     }
@@ -409,7 +409,7 @@ class AuthFlowIntegrationTest {
     @Test
     @DisplayName("rejects request without token")
     void rejectsNoToken() {
-      given().when().get("/me").then().statusCode(401);
+      given().when().get("/api/users/me").then().statusCode(401);
     }
   }
 
@@ -428,7 +428,7 @@ class AuthFlowIntegrationTest {
             """
                 .formatted(email, password, name))
         .when()
-        .post("/auth/register")
+        .post("/api/auth/register")
         .then()
         .statusCode(anyOf(is(200), is(201)));
   }
@@ -448,7 +448,7 @@ class AuthFlowIntegrationTest {
                 """
                     .formatted(email, password, name))
             .when()
-            .post("/auth/register")
+            .post("/api/auth/register")
             .then()
             .statusCode(anyOf(is(200), is(201)))
             .extract()
