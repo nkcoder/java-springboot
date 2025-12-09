@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
 export SPRING_PROFILES_ACTIVE=test
-./gradlew test --stacktrace jacocoTestCoverageVerification
+./gradlew test jacocoTestCoverageVerification

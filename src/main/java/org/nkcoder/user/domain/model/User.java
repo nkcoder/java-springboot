@@ -2,14 +2,18 @@ package org.nkcoder.user.domain.model;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import org.nkcoder.shared.kernel.domain.valueobject.Email;
+import org.nkcoder.shared.kernel.domain.valueobject.AggregateRoot;
 import org.nkcoder.user.domain.event.UserProfileUpdatedEvent;
 
-/** User aggregate root in the User bounded context. Represents a user's profile and identity information. */
-public class User {
+/**
+ * User aggregate root. Unified domain model combining authentication and profile concerns. This is the single source of
+ * truth for user identity, credentials, and profile data.
+ */
+public class User extends AggregateRoot<UserId> {
 
     private final UserId id;
     private Email email;
+    private HashedPassword password;
     private UserName name;
     private final UserRole role;
     private boolean emailVerified;
@@ -20,6 +24,7 @@ public class User {
     private User(
             UserId id,
             Email email,
+            HashedPassword password,
             UserName name,
             UserRole role,
             boolean emailVerified,
@@ -28,40 +33,54 @@ public class User {
             LocalDateTime updatedAt) {
         this.id = Objects.requireNonNull(id, "User ID cannot be null");
         this.email = Objects.requireNonNull(email, "Email cannot be null");
+        this.password = Objects.requireNonNull(password, "Password cannot be null");
         this.name = Objects.requireNonNull(name, "Name cannot be null");
-        this.role = Objects.requireNonNull(role, "Role cannot be null");
+        this.role = role != null ? role : UserRole.MEMBER;
         this.emailVerified = emailVerified;
         this.lastLoginAt = lastLoginAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
-    /** Creates a new user (typically from registration in Auth context). */
-    public static User create(UserId id, Email email, UserName name, UserRole role) {
+    /** Factory method for creating a new user during registration. */
+    public static User register(Email email, HashedPassword password, UserName name, UserRole role) {
         LocalDateTime now = LocalDateTime.now();
-        return new User(id, email, name, role, false, null, now, now);
+        return new User(UserId.generate(), email, password, name, role, false, null, now, now);
     }
 
-    /** Reconstitutes a User from persistence. */
+    /** Factory method for reconstituting from persistence. */
     public static User reconstitute(
             UserId id,
             Email email,
+            HashedPassword password,
             UserName name,
             UserRole role,
             boolean emailVerified,
             LocalDateTime lastLoginAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
-        return new User(id, email, name, role, emailVerified, lastLoginAt, createdAt, updatedAt);
+        return new User(id, email, password, name, role, emailVerified, lastLoginAt, createdAt, updatedAt);
     }
 
-    /** Updates the user's profile information. */
-    public UserProfileUpdatedEvent updateProfile(UserName newName) {
+    /** Records the current time as the last login time. */
+    public void recordLogin() {
+        this.lastLoginAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** Changes the password to a new hashed password. */
+    public void changePassword(HashedPassword newPassword) {
+        this.password = Objects.requireNonNull(newPassword, "New password cannot be null");
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /** Updates the user's profile information. Registers a domain event for the change. */
+    public void updateProfile(UserName newName) {
         UserName oldName = this.name;
         this.name = Objects.requireNonNull(newName, "Name cannot be null");
         this.updatedAt = LocalDateTime.now();
 
-        return new UserProfileUpdatedEvent(this.id, oldName, newName);
+        registerEvent(new UserProfileUpdatedEvent(this.id, oldName, newName));
     }
 
     /** Updates the user's email address. */
@@ -77,12 +96,6 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
-    /** Records a login event (called when Auth context notifies of login). */
-    public void recordLogin() {
-        this.lastLoginAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
     // Getters
 
     public UserId getId() {
@@ -91,6 +104,10 @@ public class User {
 
     public Email getEmail() {
         return email;
+    }
+
+    public HashedPassword getPassword() {
+        return password;
     }
 
     public UserName getName() {

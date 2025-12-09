@@ -1,8 +1,9 @@
 package org.nkcoder.user.infrastructure.persistence.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import org.nkcoder.shared.kernel.domain.valueobject.Email;
+import org.nkcoder.user.domain.model.Email;
 import org.nkcoder.user.domain.model.User;
 import org.nkcoder.user.domain.model.UserId;
 import org.nkcoder.user.domain.repository.UserRepository;
@@ -40,6 +41,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public boolean existsByEmail(Email email) {
+        return jpaRepository.existsByEmail(email.value());
+    }
+
+    @Override
     public boolean existsByEmailExcludingId(Email email, UserId excludeId) {
         return jpaRepository.existsByEmailExcludingId(email.value(), excludeId.value());
     }
@@ -57,5 +63,10 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public boolean existsById(UserId id) {
         return jpaRepository.existsById(id.value());
+    }
+
+    @Override
+    public void updateLastLoginAt(UserId id, LocalDateTime lastLoginAt) {
+        jpaRepository.updateLastLoginAt(id.value(), lastLoginAt);
     }
 }

@@ -1,6 +1,7 @@
 package org.nkcoder.user.infrastructure.persistence.mapper;
 
-import org.nkcoder.shared.kernel.domain.valueobject.Email;
+import org.nkcoder.user.domain.model.Email;
+import org.nkcoder.user.domain.model.HashedPassword;
 import org.nkcoder.user.domain.model.User;
 import org.nkcoder.user.domain.model.UserId;
 import org.nkcoder.user.domain.model.UserName;
@@ -15,6 +16,7 @@ public class UserPersistenceMapper {
         return User.reconstitute(
                 UserId.of(entity.getId()),
                 Email.of(entity.getEmail()),
+                HashedPassword.of(entity.getPassword()),
                 UserName.of(entity.getName()),
                 entity.getRole(),
                 entity.isEmailVerified(),
@@ -27,6 +29,7 @@ public class UserPersistenceMapper {
         return new UserJpaEntity(
                 user.getId().value(),
                 user.getEmail().value(),
+                user.getPassword().value(),
                 user.getName().value(),
                 user.getRole(),
                 user.isEmailVerified(),

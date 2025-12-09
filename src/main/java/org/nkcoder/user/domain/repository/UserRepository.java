@@ -1,8 +1,9 @@
 package org.nkcoder.user.domain.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import org.nkcoder.shared.kernel.domain.valueobject.Email;
+import org.nkcoder.user.domain.model.Email;
 import org.nkcoder.user.domain.model.User;
 import org.nkcoder.user.domain.model.UserId;
 
@@ -18,6 +19,9 @@ public interface UserRepository {
     /** Finds a user by their email address. */
     Optional<User> findByEmail(Email email);
 
+    /** Checks if an email exists. */
+    boolean existsByEmail(Email email);
+
     /** Checks if an email is already in use by another user. */
     boolean existsByEmailExcludingId(Email email, UserId excludeId);
 
@@ -29,4 +33,7 @@ public interface UserRepository {
 
     /** Checks if a user exists by ID. */
     boolean existsById(UserId id);
+
+    /** Updates the last login timestamp for a user. */
+    void updateLastLoginAt(UserId id, LocalDateTime lastLoginAt);
 }
