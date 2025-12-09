@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+export SPRING_PROFILES_ACTIVE=test
+./gradlew --no-daemon clean generateProto
+# build command depends on check which depends on test
+./gradlew build -x test
