@@ -4,8 +4,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import org.nkcoder.shared.local.rest.ApiResponse;
 import org.nkcoder.user.application.dto.response.UserDto;
-import org.nkcoder.user.application.service.UserCommandService;
-import org.nkcoder.user.application.service.UserQueryService;
+import org.nkcoder.user.application.service.UserApplicationService;
 import org.nkcoder.user.interfaces.rest.mapper.UserRequestMapper;
 import org.nkcoder.user.interfaces.rest.request.ChangePasswordRequest;
 import org.nkcoder.user.interfaces.rest.request.UpdateProfileRequest;
@@ -27,14 +26,11 @@ public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    private final UserQueryService queryService;
-    private final UserCommandService commandService;
+    private final UserApplicationService userService;
     private final UserRequestMapper requestMapper;
 
-    public UserController(
-            UserQueryService queryService, UserCommandService commandService, UserRequestMapper requestMapper) {
-        this.queryService = queryService;
-        this.commandService = commandService;
+    public UserController(UserApplicationService userService, UserRequestMapper requestMapper) {
+        this.userService = userService;
         this.requestMapper = requestMapper;
     }
 
@@ -42,7 +38,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@RequestAttribute("userId") UUID userId) {
         logger.debug("Getting current user profile");
 
-        UserDto user = queryService.getUserById(userId);
+        UserDto user = userService.getUserById(userId);
 
         return ResponseEntity.ok(ApiResponse.success("User profile retrieved", UserResponse.from(user)));
     }
@@ -52,7 +48,7 @@ public class UserController {
             @RequestAttribute("userId") UUID userId, @Valid @RequestBody UpdateProfileRequest request) {
         logger.info("Updating profile for user: {}", userId);
 
-        UserDto user = commandService.updateProfile(requestMapper.toCommand(userId, request));
+        UserDto user = userService.updateProfile(requestMapper.toCommand(userId, request));
 
         return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", UserResponse.from(user)));
     }
@@ -62,7 +58,7 @@ public class UserController {
             @RequestAttribute("userId") UUID userId, @Valid @RequestBody ChangePasswordRequest request) {
         logger.info("Changing password for user: {}", userId);
 
-        commandService.changePassword(requestMapper.toCommand(userId, request));
+        userService.changePassword(requestMapper.toCommand(userId, request));
 
         return ResponseEntity.ok(ApiResponse.success("Password changed successfully"));
     }

@@ -11,13 +11,12 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.nkcoder.auth.application.dto.response.AuthResult;
-import org.nkcoder.auth.application.service.AuthApplicationService;
-import org.nkcoder.auth.domain.model.AuthRole;
-import org.nkcoder.auth.infrastructure.security.JwtUtil;
 import org.nkcoder.infrastructure.config.IntegrationTest;
-import org.nkcoder.user.application.service.UserCommandService;
-import org.nkcoder.user.application.service.UserQueryService;
+import org.nkcoder.user.application.dto.response.AuthResult;
+import org.nkcoder.user.application.service.AuthApplicationService;
+import org.nkcoder.user.application.service.UserApplicationService;
+import org.nkcoder.user.domain.model.UserRole;
+import org.nkcoder.user.infrastructure.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -40,10 +39,7 @@ public class AuthControllerIntegrationTest {
     private AuthApplicationService authService;
 
     @MockitoBean
-    private UserQueryService userQueryService;
-
-    @MockitoBean
-    private UserCommandService userCommandService;
+    private UserApplicationService userService;
 
     @MockitoBean
     private JwtUtil jwtUtil;
@@ -165,6 +161,6 @@ public class AuthControllerIntegrationTest {
     }
 
     private AuthResult createAuthResult() {
-        return new AuthResult(UUID.randomUUID(), "test@example.com", AuthRole.MEMBER, "access-token", "refresh-token");
+        return new AuthResult(UUID.randomUUID(), "test@example.com", UserRole.MEMBER, "access-token", "refresh-token");
     }
 }

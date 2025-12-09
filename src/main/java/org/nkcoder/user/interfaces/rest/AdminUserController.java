@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import org.nkcoder.shared.local.rest.ApiResponse;
 import org.nkcoder.user.application.dto.response.UserDto;
-import org.nkcoder.user.application.service.UserCommandService;
-import org.nkcoder.user.application.service.UserQueryService;
+import org.nkcoder.user.application.service.UserApplicationService;
 import org.nkcoder.user.interfaces.rest.mapper.UserRequestMapper;
 import org.nkcoder.user.interfaces.rest.request.AdminResetPasswordRequest;
 import org.nkcoder.user.interfaces.rest.request.AdminUpdateUserRequest;
@@ -30,14 +29,11 @@ public class AdminUserController {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
 
-    private final UserQueryService queryService;
-    private final UserCommandService commandService;
+    private final UserApplicationService userService;
     private final UserRequestMapper requestMapper;
 
-    public AdminUserController(
-            UserQueryService queryService, UserCommandService commandService, UserRequestMapper requestMapper) {
-        this.queryService = queryService;
-        this.commandService = commandService;
+    public AdminUserController(UserApplicationService userService, UserRequestMapper requestMapper) {
+        this.userService = userService;
         this.requestMapper = requestMapper;
     }
 
@@ -46,7 +42,7 @@ public class AdminUserController {
         logger.debug("Admin getting all users");
 
         List<UserResponse> users =
-                queryService.getAllUsers().stream().map(UserResponse::from).toList();
+                userService.getAllUsers().stream().map(UserResponse::from).toList();
 
         return ResponseEntity.ok(ApiResponse.success("Users retrieved", users));
     }
@@ -55,7 +51,7 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID userId) {
         logger.debug("Admin getting user: {}", userId);
 
-        UserDto user = queryService.getUserById(userId);
+        UserDto user = userService.getUserById(userId);
 
         return ResponseEntity.ok(ApiResponse.success("User retrieved", UserResponse.from(user)));
     }
@@ -65,7 +61,7 @@ public class AdminUserController {
             @PathVariable UUID userId, @Valid @RequestBody AdminUpdateUserRequest request) {
         logger.info("Admin updating user: {}", userId);
 
-        UserDto user = commandService.adminUpdateUser(requestMapper.toCommand(userId, request));
+        UserDto user = userService.adminUpdateUser(requestMapper.toCommand(userId, request));
 
         return ResponseEntity.ok(ApiResponse.success("User updated successfully", UserResponse.from(user)));
     }
@@ -75,7 +71,7 @@ public class AdminUserController {
             @PathVariable UUID userId, @Valid @RequestBody AdminResetPasswordRequest request) {
         logger.info("Admin resetting password for user: {}", userId);
 
-        commandService.adminResetPassword(requestMapper.toCommand(userId, request));
+        userService.adminResetPassword(requestMapper.toCommand(userId, request));
 
         return ResponseEntity.ok(ApiResponse.success("Password reset successfully"));
     }

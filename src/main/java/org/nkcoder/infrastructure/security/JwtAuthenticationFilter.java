@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
-import org.nkcoder.auth.domain.model.AuthRole;
-import org.nkcoder.auth.infrastructure.security.JwtUtil;
+import org.nkcoder.user.domain.model.UserRole;
+import org.nkcoder.user.infrastructure.security.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UUID userId = UUID.fromString(claims.getSubject());
                 String email = claims.get("email", String.class);
                 String roleString = claims.get("role", String.class);
-                AuthRole role = AuthRole.valueOf(roleString);
+                UserRole role = UserRole.valueOf(roleString);
 
                 // Create authorities
                 List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));

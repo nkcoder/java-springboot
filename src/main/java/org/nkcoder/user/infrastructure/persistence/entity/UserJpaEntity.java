@@ -2,9 +2,11 @@ package org.nkcoder.user.infrastructure.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import java.time.LocalDateTime;
@@ -13,14 +15,17 @@ import org.nkcoder.user.domain.model.UserRole;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
- * JPA entity for User in the User bounded context. Maps to the same 'users' table as AuthUserJpaEntity but with
- * different field focus. Implements Persistable to control new/existing entity detection since the row may already
- * exist (created by Auth context).
+ * JPA entity for User. Unified entity containing both authentication and profile data. Implements Persistable to
+ * control new/existing entity detection since we provide our own UUID.
  */
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {@Index(name = "idx_users_email", columnList = "email")})
+@EntityListeners(AuditingEntityListener.class)
 public class UserJpaEntity implements Persistable<UUID> {
 
     @Id
@@ -31,6 +36,9 @@ public class UserJpaEntity implements Persistable<UUID> {
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
+    private String password;
 
     @Column(nullable = false)
     private String name;
@@ -58,6 +66,7 @@ public class UserJpaEntity implements Persistable<UUID> {
     public UserJpaEntity(
             UUID id,
             String email,
+            String password,
             String name,
             UserRole role,
             boolean emailVerified,
@@ -66,6 +75,7 @@ public class UserJpaEntity implements Persistable<UUID> {
             LocalDateTime updatedAt) {
         this.id = id;
         this.email = email;
+        this.password = password;
         this.name = name;
         this.role = role;
         this.emailVerified = emailVerified;
@@ -90,6 +100,14 @@ public class UserJpaEntity implements Persistable<UUID> {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getName() {
