@@ -305,29 +305,9 @@ spring:
     password: ${DATABASE_PASSWORD}
 ```
 
-## Troubleshooting
+## References
 
-### Common Issues
-
-**JWT Secret Too Short**
-
-```
-Error: JWT secret must be at least 64 bytes for HS512
-Solution: Generate proper length secrets using the KeyGenerator utility
-```
-
-**Database Connection Issues**
-
-```
-Check: DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD in .env
-Verify: PostgreSQL is running and accessible
-```
-
-**Port Already in Use**
-
-```
-Change port in application.yml or stop conflicting services
-```
+- [Implementing Domain Driven Design with Spring](https://github.com/maciejwalkowiak/implementing-ddd-with-spring-talk)
 
 ## License
 

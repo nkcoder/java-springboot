@@ -69,6 +69,27 @@ public class JwtTokenGeneratorAdapter implements TokenGenerator {
     }
 
     @Override
+    public AccessTokenClaims validateAccessToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(accessTokenKey)
+                    .requireIssuer(jwtProperties.issuer())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            UserId userId = UserId.of(claims.getSubject());
+            Email email = Email.of(claims.get("email", String.class));
+            UserRole role = UserRole.valueOf(claims.get("role", String.class));
+
+            return new AccessTokenClaims(userId, email, role);
+        } catch (JwtException e) {
+            logger.error("Access token validation failed: {}", e.getMessage());
+            throw new AuthenticationException("Invalid access token");
+        }
+    }
+
+    @Override
     public RefreshTokenClaims validateRefreshToken(String token) {
         try {
             Claims claims = Jwts.parser()

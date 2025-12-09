@@ -16,7 +16,7 @@ import org.nkcoder.user.application.dto.response.AuthResult;
 import org.nkcoder.user.application.service.AuthApplicationService;
 import org.nkcoder.user.application.service.UserApplicationService;
 import org.nkcoder.user.domain.model.UserRole;
-import org.nkcoder.user.infrastructure.security.JwtUtil;
+import org.nkcoder.user.domain.service.TokenGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -42,7 +42,7 @@ public class AuthControllerIntegrationTest {
     private UserApplicationService userService;
 
     @MockitoBean
-    private JwtUtil jwtUtil;
+    private TokenGenerator tokenGenerator;
 
     @Nested
     @DisplayName("Public Endpoints")

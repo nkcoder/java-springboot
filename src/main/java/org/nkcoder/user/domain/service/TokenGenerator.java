@@ -18,8 +18,14 @@ public interface TokenGenerator {
     /** Returns the expiry time for refresh tokens. */
     LocalDateTime getRefreshTokenExpiry();
 
+    /** Validates an access token and returns its claims. */
+    AccessTokenClaims validateAccessToken(String token);
+
     /** Validates a refresh token and returns its claims. */
     RefreshTokenClaims validateRefreshToken(String token);
+
+    /** Claims extracted from a validated access token. */
+    record AccessTokenClaims(UserId userId, Email email, UserRole role) {}
 
     /** Claims extracted from a validated refresh token. */
     record RefreshTokenClaims(UserId userId, TokenFamily tokenFamily) {}
