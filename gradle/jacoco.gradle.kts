@@ -61,7 +61,7 @@ val strictCoverageClasses = listOf(
 )
 
 tasks.named<JacocoReport>("jacocoTestReport") {
-    dependsOn(tasks.named("test"))
+    dependsOn(tasks.named("test"), tasks.named("processResources"), tasks.named("compileJava"))
     reports {
         xml.required.set(true)      // For CI/CD integration
         html.required.set(true)     // For human-readable reports
