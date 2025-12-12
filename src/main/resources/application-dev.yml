@@ -1,0 +1,53 @@
+# =============================================================================
+# Development/Staging Profile
+# =============================================================================
+# Usage: Set SPRING_PROFILES_ACTIVE=dev
+#
+# Features:
+# - Connects to external PostgreSQL (via environment variables)
+# - Swagger UI enabled for API testing
+# - Info-level logging
+# - JWT secrets from environment variables (required)
+#
+# Required Environment Variables:
+# - DATABASE_URL (e.g., jdbc:postgresql://dev-db.example.com:5432/users)
+# - DATABASE_USERNAME
+# - DATABASE_PASSWORD
+# - JWT_ACCESS_SECRET (min 64 bytes for HS512)
+# - JWT_REFRESH_SECRET (min 64 bytes for HS512)
+# =============================================================================
+
+spring:
+  # External database connection
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  # gRPC reflection enabled for dev debugging
+  grpc:
+    server:
+      reflection:
+        enabled: true
+
+# Enable Swagger UI for dev/staging
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+# Development logging (more verbose than prod)
+logging:
+  level:
+    org.nkcoder: DEBUG
+    org.springframework.security: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG

@@ -27,8 +27,8 @@ A comprehensive user authentication and management service built with Java 21 an
 
 ## Tech Stack
 
-- **Java 21** (Latest LTS)
-- **Spring Boot 3.5.3**
+- **Java 25** (Latest LTS)
+- **Spring Boot 4**
 - **Spring Security 6**
 - **Spring Data JPA**
 - **PostgreSQL 17**

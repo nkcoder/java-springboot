@@ -1,19 +1,43 @@
+# =============================================================================
+# Local Development Profile
+# =============================================================================
+# Usage: ./gradlew bootRun --args='--spring.profiles.active=local'
+#        or set SPRING_PROFILES_ACTIVE=local
+#
+# Features:
+# - Docker Compose auto-starts PostgreSQL container
+# - Swagger UI enabled for API exploration
+# - Debug logging enabled
+# - Default JWT secrets (DO NOT use in production)
+# =============================================================================
+
 spring:
-  application:
-    name: user-service
+  # Auto-start PostgreSQL via Docker Compose
   docker:
     compose:
       enabled: true
+      lifecycle-management: start-and-stop
+      skip:
+        in-tests: true
 
-# Logging Configuration
+  # gRPC reflection enabled for local debugging (grpcurl, etc.)
+  grpc:
+    server:
+      reflection:
+        enabled: true
+
+# Enable Swagger UI for local development
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+# Debug logging for local development
 logging:
   level:
-    com.timor.user: DEBUG
-    org.springframework.security: INFO
-    org.springframework.web: INFO
-    org.hibernate.SQL: INFO
-    org.hibernate.type.descriptor.sql.BasicBinder: INFO
-    com.zaxxer.hikari: INFO
-    com.zaxxer.hikari.HikariConfig: INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    org.nkcoder: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

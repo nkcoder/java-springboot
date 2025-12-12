@@ -1,6 +1,26 @@
+# =============================================================================
+# Docker Compose - Local Development (Database Only)
+# =============================================================================
+# Used by Spring Boot's Docker Compose integration when:
+#   spring.docker.compose.enabled=true (in application-local.yml)
+#
+# This file is auto-detected and managed by Spring Boot.
+# The application runs on your host machine, only PostgreSQL runs in Docker.
+#
+# Usage:
+#   ./gradlew bootRun --args='--spring.profiles.active=local'
+#   (Spring Boot automatically starts/stops this compose file)
+#
+# Manual control:
+#   Start: docker compose up -d
+#   Stop:  docker compose down
+#   Reset: docker compose down -v (removes data volume)
+# =============================================================================
+
 services:
   postgres:
-    image: postgres:17.5-alpine
+    image: postgres:17-alpine
+    container_name: user-service-local-db
     ports:
       - "54321:5432"
     environment:
@@ -9,12 +29,12 @@ services:
       - POSTGRES_PASSWORD=test_user@pass01
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - user-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user_rw -d users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
-
-networks:
-  user-network:
-    driver: bridge 
+    name: user-service-local-postgres-data
