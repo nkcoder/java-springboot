@@ -1,38 +1,29 @@
 package org.nkcoder.integration;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
-
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.nkcoder.infrastructure.config.TestContainersConfiguration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
 @Import(TestContainersConfiguration.class)
 @ActiveProfiles("test")
 @DisplayName("AdminUserController Integration Tests")
 @Disabled("Tests need fixing - response structure mismatch")
 class AdminUserControllerIntegrationTest {
 
-    @LocalServerPort
-    private int port;
-
-    @BeforeEach
-    void setupRestAssured() {
-        RestAssured.port = port;
-        RestAssured.basePath = "";
-    }
+    @Autowired
+    private WebTestClient webTestClient;
 
     @Nested
     @DisplayName("GET /api/admin/users - Get All Users")
@@ -41,7 +32,12 @@ class AdminUserControllerIntegrationTest {
         @Test
         @DisplayName("returns 401 without authentication")
         void returns401WithoutAuth() {
-            given().when().get("/api/admin/users").then().statusCode(401);
+            webTestClient
+                    .get()
+                    .uri("/api/admin/users")
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
         }
 
         @Test
@@ -49,13 +45,18 @@ class AdminUserControllerIntegrationTest {
         void returnsUserListForAdmin() {
             String adminToken = registerAndGetToken("admin@example.com", "Password123", "Admin User", "ADMIN");
 
-            given().header("Authorization", "Bearer " + adminToken)
-                    .when()
-                    .get("/api/admin/users")
-                    .then()
-                    .statusCode(200)
-                    .body("data", notNullValue())
-                    .body("data", isA(java.util.List.class));
+            webTestClient
+                    .get()
+                    .uri("/api/admin/users")
+                    .header("Authorization", "Bearer " + adminToken)
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody()
+                    .jsonPath("$.data")
+                    .isNotEmpty()
+                    .jsonPath("$.data")
+                    .isArray();
         }
     }
 
@@ -67,7 +68,12 @@ class AdminUserControllerIntegrationTest {
         @DisplayName("returns 401 without authentication")
         void returns401WithoutAuth() {
             String userId = "123e4567-e89b-12d3-a456-426614174000";
-            given().when().get("/api/admin/users/{userId}", userId).then().statusCode(401);
+            webTestClient
+                    .get()
+                    .uri("/api/admin/users/{userId}", userId)
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
         }
 
         @Test
@@ -79,13 +85,18 @@ class AdminUserControllerIntegrationTest {
             // Register admin
             String adminToken = registerAndGetToken("admin2@example.com", "Password123", "Admin User", "ADMIN");
 
-            given().header("Authorization", "Bearer " + adminToken)
-                    .when()
-                    .get("/api/admin/users/{userId}", targetUserId)
-                    .then()
-                    .statusCode(200)
-                    .body("data.email", equalTo("target@example.com"))
-                    .body("data.name", equalTo("Target User"));
+            webTestClient
+                    .get()
+                    .uri("/api/admin/users/{userId}", targetUserId)
+                    .header("Authorization", "Bearer " + adminToken)
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody()
+                    .jsonPath("$.data.email")
+                    .isEqualTo("target@example.com")
+                    .jsonPath("$.data.name")
+                    .isEqualTo("Target User");
         }
 
         @Test
@@ -94,11 +105,13 @@ class AdminUserControllerIntegrationTest {
             String adminToken = registerAndGetToken("admin3@example.com", "Password123", "Admin User", "ADMIN");
             String nonExistentUserId = "00000000-0000-0000-0000-000000000000";
 
-            given().header("Authorization", "Bearer " + adminToken)
-                    .when()
-                    .get("/api/admin/users/{userId}", nonExistentUserId)
-                    .then()
-                    .statusCode(404);
+            webTestClient
+                    .get()
+                    .uri("/api/admin/users/{userId}", nonExistentUserId)
+                    .header("Authorization", "Bearer " + adminToken)
+                    .exchange()
+                    .expectStatus()
+                    .isNotFound();
         }
     }
 
@@ -110,12 +123,14 @@ class AdminUserControllerIntegrationTest {
         @DisplayName("returns 401 without authentication")
         void returns401WithoutAuth() {
             String userId = "123e4567-e89b-12d3-a456-426614174000";
-            given().contentType(ContentType.JSON)
-                    .body("{\"name\": \"Updated Name\"}")
-                    .when()
-                    .patch("/api/admin/users/{userId}", userId)
-                    .then()
-                    .statusCode(401);
+            webTestClient
+                    .patch()
+                    .uri("/api/admin/users/{userId}", userId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"name\": \"Updated Name\"}")
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
         }
 
         @Test
@@ -127,22 +142,28 @@ class AdminUserControllerIntegrationTest {
             // Register admin
             String adminToken = registerAndGetToken("admin4@example.com", "Password123", "Admin User", "ADMIN");
 
-            given().header("Authorization", "Bearer " + adminToken)
-                    .contentType(ContentType.JSON)
-                    .body("""
-              {
-                "name": "Admin Updated Name",
-                "emailVerified": true,
-                "role": "ADMIN"
-              }
-              """)
-                    .when()
-                    .patch("/api/admin/users/{userId}", targetUserId)
-                    .then()
-                    .statusCode(200)
-                    .body("data.name", equalTo("Admin Updated Name"))
-                    .body("data.emailVerified", equalTo(true))
-                    .body("data.role", equalTo("ADMIN"));
+            webTestClient
+                    .patch()
+                    .uri("/api/admin/users/{userId}", targetUserId)
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "name": "Admin Updated Name",
+                      "emailVerified": true,
+                      "role": "ADMIN"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody()
+                    .jsonPath("$.data.name")
+                    .isEqualTo("Admin Updated Name")
+                    .jsonPath("$.data.emailVerified")
+                    .isEqualTo(true)
+                    .jsonPath("$.data.role")
+                    .isEqualTo("ADMIN");
         }
     }
 
@@ -154,12 +175,14 @@ class AdminUserControllerIntegrationTest {
         @DisplayName("returns 401 without authentication")
         void returns401WithoutAuth() {
             String userId = "123e4567-e89b-12d3-a456-426614174000";
-            given().contentType(ContentType.JSON)
-                    .body("{\"newPassword\": \"NewPassword123\"}")
-                    .when()
-                    .patch("/api/admin/users/{userId}/password", userId)
-                    .then()
-                    .statusCode(401);
+            webTestClient
+                    .patch()
+                    .uri("/api/admin/users/{userId}/password", userId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"newPassword\": \"NewPassword123\"}")
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
         }
 
         @Test
@@ -173,66 +196,60 @@ class AdminUserControllerIntegrationTest {
             String adminToken = registerAndGetToken("admin5@example.com", "Password123", "Admin User", "ADMIN");
 
             // Reset password
-            given().header("Authorization", "Bearer " + adminToken)
-                    .contentType(ContentType.JSON)
-                    .body("""
-              {
-                "newPassword": "NewPassword123"
-              }
-              """)
-                    .when()
-                    .patch("/api/admin/users/{userId}/password", targetUserId)
-                    .then()
-                    .statusCode(200);
+            webTestClient
+                    .patch()
+                    .uri("/api/admin/users/{userId}/password", targetUserId)
+                    .header("Authorization", "Bearer " + adminToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "newPassword": "NewPassword123"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isOk();
 
             // Verify new password works
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "target3@example.com",
-                "password": "NewPassword123"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/login")
-                    .then()
-                    .statusCode(200);
+            webTestClient
+                    .post()
+                    .uri("/api/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "target3@example.com",
+                      "password": "NewPassword123"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isOk();
 
             // Verify old password doesn't work
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "target3@example.com",
-                "password": "OldPassword123"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/login")
-                    .then()
-                    .statusCode(401);
+            webTestClient
+                    .post()
+                    .uri("/api/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "target3@example.com",
+                      "password": "OldPassword123"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
         }
     }
 
     // Helper methods
-    private void registerUser(String email, String password, String name, String role) {
-        given().contentType(ContentType.JSON)
-                .body("""
-            {
-              "email": "%s",
-              "password": "%s",
-              "name": "%s",
-              "role": "%s"
-            }
-            """.formatted(email, password, name, role))
-                .when()
-                .post("/api/auth/register")
-                .then()
-                .statusCode(anyOf(is(200), is(201)));
-    }
 
     private String registerAndGetToken(String email, String password, String name, String role) {
-        Response response = given().contentType(ContentType.JSON)
-                .body("""
+        var response = webTestClient
+                .post()
+                .uri("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
                 {
                   "email": "%s",
                   "password": "%s",
@@ -240,19 +257,22 @@ class AdminUserControllerIntegrationTest {
                   "role": "%s"
                 }
                 """.formatted(email, password, name, role))
-                .when()
-                .post("/api/auth/register")
-                .then()
-                .statusCode(anyOf(is(200), is(201)))
-                .extract()
-                .response();
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody()
+                .returnResult();
 
-        return response.jsonPath().getString("data.tokens.accessToken");
+        String responseBody = new String(response.getResponseBody());
+        return extractJsonValue(responseBody, "data.tokens.accessToken");
     }
 
     private String registerAndGetUserId(String email, String password, String name, String role) {
-        Response response = given().contentType(ContentType.JSON)
-                .body("""
+        var response = webTestClient
+                .post()
+                .uri("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
                 {
                   "email": "%s",
                   "password": "%s",
@@ -260,13 +280,44 @@ class AdminUserControllerIntegrationTest {
                   "role": "%s"
                 }
                 """.formatted(email, password, name, role))
-                .when()
-                .post("/api/auth/register")
-                .then()
-                .statusCode(anyOf(is(200), is(201)))
-                .extract()
-                .response();
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody()
+                .returnResult();
 
-        return response.jsonPath().getString("data.user.id");
+        String responseBody = new String(response.getResponseBody());
+        return extractJsonValue(responseBody, "data.user.id");
+    }
+
+    /** Simple JSON value extractor for dot-notation paths. */
+    private String extractJsonValue(String json, String path) {
+        String[] parts = path.split("\\.");
+        String current = json;
+
+        for (String part : parts) {
+            int keyIndex = current.indexOf("\"" + part + "\"");
+            if (keyIndex == -1) {
+                return null;
+            }
+            current = current.substring(keyIndex + part.length() + 2);
+            int colonIndex = current.indexOf(":");
+            current = current.substring(colonIndex + 1).trim();
+
+            if (current.startsWith("\"")) {
+                // String value
+                int endQuote = current.indexOf("\"", 1);
+                if (endQuote == -1) {
+                    return null;
+                }
+                if (parts[parts.length - 1].equals(part)) {
+                    return current.substring(1, endQuote);
+                }
+            } else if (current.startsWith("{")) {
+                // Object - continue to next part
+                continue;
+            }
+        }
+        return null;
     }
 }

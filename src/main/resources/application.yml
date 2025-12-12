@@ -27,28 +27,22 @@ spring:
           fetch_size: 100
         generate_statistics: false
   
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:3001
-  
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
-    time-zone: UTC
-    property-naming-strategy: LOWER_CAMEL_CASE
-
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration
-
   docker:
     compose:
       enabled: false
+
   threads:
     virtual:
       enabled: true
+
+  # gRPC configuration
+  grpc:
+    server:
+      port: 9090
+      max-inbound-message-size: 4MB
+      max-inbound-metadata-size: 8KB
+      reflection:
+        enabled: true
 
 # JWT Configuration
 jwt:
@@ -68,10 +62,6 @@ cors:
   allow-credentials: true
   max-age: 3600
 
-# Rate Limiting Configuration
-rate-limit:
-  requests-per-window: 100
-  window-size-minutes: 15
 
 # Actuator Configuration
 management:
@@ -118,11 +108,3 @@ info:
     description: '@project.description@'
     java-version: '@java.version@'
     spring-boot-version: '@parent.version@'
-
-# grpc configuration
-grpc:
-  server:
-    port: 9090
-    max-inbound-message-size: 4194304  # 4MB
-    max-inbound-metadata-size: 8192    # 8KB
-    reflection-service-enabled: true

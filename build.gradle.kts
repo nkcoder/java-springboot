@@ -1,7 +1,7 @@
 import com.google.protobuf.gradle.id
 
 plugins {
-    id("org.springframework.boot") version "3.5.8"
+    id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.graalvm.buildtools.native") version "0.11.1"
     id("org.jetbrains.kotlin.jvm") version "2.2.21"
@@ -26,22 +26,21 @@ repositories {
     mavenCentral()
 }
 
-extra["testcontainersVersion"] = "2.0.2"
-extra["jjwtVersion"] = "0.12.6"
+extra["testcontainersVersion"] = "1.21.3"
+extra["jjwtVersion"] = "0.13.0"
 
 dependencies {
     // Spring Boot Starters
-    implementation("org.springframework.boot:spring-boot-starter-web") {
-        exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
-    }
-    implementation("org.springframework.boot:spring-boot-starter-undertow")
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14")
+    implementation("org.springframework.boot:spring-boot-starter-jackson")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")
 
     // Database
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
     runtimeOnly("org.postgresql:postgresql:42.7.8")
     runtimeOnly("org.flywaydb:flyway-database-postgresql:11.11.1")
 
@@ -56,31 +55,28 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 
     // Testing
-    testImplementation("org.springframework.boot:spring-boot-starter-test") {
-        exclude(group = "junit", module = "junit")
-    }
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux-test")  // For WebTestClient
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.3")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
-    testImplementation("io.rest-assured:rest-assured:5.5.6")
-    testImplementation("io.rest-assured:json-path:5.5.6")
 
     // Swagger
     implementation("io.swagger.core.v3:swagger-models:2.2.34")
     implementation("io.swagger.core.v3:swagger-core:2.2.34")
-    implementation("javax.xml.bind:jaxb-api:2.3.1")
-    implementation("com.sun.xml.bind:jaxb-impl:2.3.9")
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
+    runtimeOnly("org.glassfish.jaxb:jaxb-runtime:4.0.5")
 
     // gRPC and Protobuf
     implementation("io.grpc:grpc-netty-shaded:1.77.0")
     implementation("io.grpc:grpc-protobuf:1.77.0")
     implementation("io.grpc:grpc-stub:1.77.0")
     implementation("com.google.protobuf:protobuf-java:4.33.1")
-    // Because protobuf is still using javax annotations
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
-    implementation("net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE")
+    implementation("jakarta.annotation:jakarta.annotation-api:3.0.0")
+    implementation("org.springframework.grpc:spring-grpc-spring-boot-starter:1.0.0")
 }
 
 dependencyManagement {

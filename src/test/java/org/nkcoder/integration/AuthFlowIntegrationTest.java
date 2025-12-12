@@ -1,36 +1,27 @@
 package org.nkcoder.integration;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
-
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.nkcoder.infrastructure.config.TestContainersConfiguration;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
 @Import(TestContainersConfiguration.class)
 @ActiveProfiles("test")
 @DisplayName("Auth Flow Integration Tests")
 class AuthFlowIntegrationTest {
 
-    @LocalServerPort
-    private int port;
-
-    @BeforeEach
-    void setupRestAssured() {
-        RestAssured.port = port;
-        RestAssured.basePath = "";
-    }
+    @Autowired
+    private WebTestClient webTestClient;
 
     @Nested
     @DisplayName("Complete Authentication Flow")
@@ -40,99 +31,123 @@ class AuthFlowIntegrationTest {
         @DisplayName("register → login → access protected → refresh → logout")
         void fullAuthenticationFlow() {
             // Step 1: Register
-            Response registerResponse = given().contentType(ContentType.JSON)
-                    .body("""
-                  {
-                    "email": "flow@example.com",
-                    "password": "Password123",
-                    "name": "Flow Test User",
-                    "role": "MEMBER"
-                  }
-                  """)
-                    .when()
-                    .post("/api/auth/register")
-                    .then()
-                    .statusCode(anyOf(is(200), is(201)))
-                    .body("data.user.email", equalTo("flow@example.com"))
-                    .body("data.tokens.accessToken", notNullValue())
-                    .body("data.tokens.refreshToken", notNullValue())
-                    .extract()
-                    .response();
+            var registerResponse = webTestClient
+                    .post()
+                    .uri("/api/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "flow@example.com",
+                      "password": "Password123",
+                      "name": "Flow Test User",
+                      "role": "MEMBER"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .is2xxSuccessful()
+                    .expectBody()
+                    .jsonPath("$.data.user.email")
+                    .isEqualTo("flow@example.com")
+                    .jsonPath("$.data.tokens.accessToken")
+                    .isNotEmpty()
+                    .jsonPath("$.data.tokens.refreshToken")
+                    .isNotEmpty()
+                    .returnResult();
 
-            String accessToken = registerResponse.jsonPath().getString("data.tokens.accessToken");
-            String refreshToken = registerResponse.jsonPath().getString("data.tokens.refreshToken");
+            String responseBody = new String(registerResponse.getResponseBody());
+            String accessToken = extractJsonValue(responseBody, "data.tokens.accessToken");
+            String refreshToken = extractJsonValue(responseBody, "data.tokens.refreshToken");
 
             // Step 2: Access protected endpoint
-            given().header("Authorization", "Bearer " + accessToken)
-                    .when()
-                    .get("/api/users/me")
-                    .then()
-                    .statusCode(200)
-                    .body("data.email", equalTo("flow@example.com"))
-                    .body("data.name", equalTo("Flow Test User"));
+            webTestClient
+                    .get()
+                    .uri("/api/users/me")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody()
+                    .jsonPath("$.data.email")
+                    .isEqualTo("flow@example.com")
+                    .jsonPath("$.data.name")
+                    .isEqualTo("Flow Test User");
 
             // Step 3: Refresh tokens
-            Response refreshResponse = given().contentType(ContentType.JSON)
-                    .body("""
-                  {
-                    "refreshToken": "%s"
-                  }
-                  """.formatted(refreshToken))
-                    .when()
-                    .post("/api/auth/refresh")
-                    .then()
-                    .statusCode(200)
-                    .body("data.tokens.accessToken", notNullValue())
-                    .body("data.tokens.refreshToken", notNullValue())
-                    .extract()
-                    .response();
+            var refreshResponse = webTestClient
+                    .post()
+                    .uri("/api/auth/refresh")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "refreshToken": "%s"
+                    }
+                    """.formatted(refreshToken))
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody()
+                    .jsonPath("$.data.tokens.accessToken")
+                    .isNotEmpty()
+                    .jsonPath("$.data.tokens.refreshToken")
+                    .isNotEmpty()
+                    .returnResult();
 
-            String newAccessToken = refreshResponse.jsonPath().getString("data.tokens.accessToken");
-            String newRefreshToken = refreshResponse.jsonPath().getString("data.tokens.refreshToken");
+            String refreshResponseBody = new String(refreshResponse.getResponseBody());
+            String newAccessToken = extractJsonValue(refreshResponseBody, "data.tokens.accessToken");
+            String newRefreshToken = extractJsonValue(refreshResponseBody, "data.tokens.refreshToken");
 
             // Step 4: Old refresh token should be invalid
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "refreshToken": "%s"
-              }
-              """.formatted(refreshToken))
-                    .when()
-                    .post("/api/auth/refresh")
-                    .then()
-                    .statusCode(401);
+            webTestClient
+                    .post()
+                    .uri("/api/auth/refresh")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "refreshToken": "%s"
+                    }
+                    """.formatted(refreshToken))
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
 
             // Step 5: New access token works
-            given().header("Authorization", "Bearer " + newAccessToken)
-                    .when()
-                    .get("/api/users/me")
-                    .then()
-                    .statusCode(200);
+            webTestClient
+                    .get()
+                    .uri("/api/users/me")
+                    .header("Authorization", "Bearer " + newAccessToken)
+                    .exchange()
+                    .expectStatus()
+                    .isOk();
 
             // Step 6: Logout
-            given().header("Authorization", "Bearer " + newAccessToken)
-                    .contentType(ContentType.JSON)
-                    .body("""
-              {
-                "refreshToken": "%s"
-              }
-              """.formatted(newRefreshToken))
-                    .when()
-                    .post("/api/auth/logout")
-                    .then()
-                    .statusCode(200);
+            webTestClient
+                    .post()
+                    .uri("/api/auth/logout")
+                    .header("Authorization", "Bearer " + newAccessToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "refreshToken": "%s"
+                    }
+                    """.formatted(newRefreshToken))
+                    .exchange()
+                    .expectStatus()
+                    .isOk();
 
             // Step 7: Refresh token invalid after logout
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "refreshToken": "%s"
-              }
-              """.formatted(newRefreshToken))
-                    .when()
-                    .post("/api/auth/refresh")
-                    .then()
-                    .statusCode(401);
+            webTestClient
+                    .post()
+                    .uri("/api/auth/refresh")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "refreshToken": "%s"
+                    }
+                    """.formatted(newRefreshToken))
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
         }
     }
 
@@ -143,76 +158,92 @@ class AuthFlowIntegrationTest {
         @Test
         @DisplayName("registers new user successfully")
         void registersNewUser() {
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "newuser@example.com",
-                "password": "Password123",
-                "name": "New User",
-                "role": "MEMBER"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/register")
-                    .then()
-                    .statusCode(anyOf(is(200), is(201)))
-                    .body("data.user.email", equalTo("newuser@example.com"))
-                    .body("data.tokens.accessToken", notNullValue())
-                    .body("data.tokens.refreshToken", notNullValue());
+            webTestClient
+                    .post()
+                    .uri("/api/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "newuser@example.com",
+                      "password": "Password123",
+                      "name": "New User",
+                      "role": "MEMBER"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .is2xxSuccessful()
+                    .expectBody()
+                    .jsonPath("$.data.user.email")
+                    .isEqualTo("newuser@example.com")
+                    .jsonPath("$.data.tokens.accessToken")
+                    .isNotEmpty()
+                    .jsonPath("$.data.tokens.refreshToken")
+                    .isNotEmpty();
         }
 
         @Test
         @DisplayName("rejects duplicate email")
         void rejectsDuplicateEmail() {
             // First registration
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "duplicate@example.com",
-                "password": "Password123",
-                "name": "First User",
-                "role": "MEMBER"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/register")
-                    .then()
-                    .statusCode(anyOf(is(200), is(201)));
+            webTestClient
+                    .post()
+                    .uri("/api/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "duplicate@example.com",
+                      "password": "Password123",
+                      "name": "First User",
+                      "role": "MEMBER"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .is2xxSuccessful();
 
             // Second registration with same email
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "duplicate@example.com",
-                "password": "Password123",
-                "name": "Second User",
-                "role": "MEMBER"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/register")
-                    .then()
-                    .statusCode(400)
-                    .body("message", equalTo("User already exists"));
+            webTestClient
+                    .post()
+                    .uri("/api/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "duplicate@example.com",
+                      "password": "Password123",
+                      "name": "Second User",
+                      "role": "MEMBER"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isBadRequest()
+                    .expectBody()
+                    .jsonPath("$.message")
+                    .isEqualTo("User already exists");
         }
 
         @Test
         @DisplayName("normalizes email to lowercase")
         void normalizesEmail() {
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "UPPERCASE@EXAMPLE.COM",
-                "password": "Password123",
-                "name": "Uppercase Email",
-                "role": "MEMBER"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/register")
-                    .then()
-                    .statusCode(anyOf(is(200), is(201)))
-                    .body("data.user.email", equalTo("uppercase@example.com"));
+            webTestClient
+                    .post()
+                    .uri("/api/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "UPPERCASE@EXAMPLE.COM",
+                      "password": "Password123",
+                      "name": "Uppercase Email",
+                      "role": "MEMBER"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .is2xxSuccessful()
+                    .expectBody()
+                    .jsonPath("$.data.user.email")
+                    .isEqualTo("uppercase@example.com");
         }
     }
 
@@ -227,19 +258,24 @@ class AuthFlowIntegrationTest {
             registerUser("login@example.com", "Password1234", "Login User");
 
             // Login
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "login@example.com",
-                "password": "Password1234"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/login")
-                    .then()
-                    .statusCode(200)
-                    .body("data.user.email", equalTo("login@example.com"))
-                    .body("data.tokens.accessToken", notNullValue());
+            webTestClient
+                    .post()
+                    .uri("/api/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "login@example.com",
+                      "password": "Password1234"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody()
+                    .jsonPath("$.data.user.email")
+                    .isEqualTo("login@example.com")
+                    .jsonPath("$.data.tokens.accessToken")
+                    .isNotEmpty();
         }
 
         @Test
@@ -247,35 +283,43 @@ class AuthFlowIntegrationTest {
         void rejectsWrongPassword() {
             registerUser("wrongpass@example.com", "Password123", "Wrong Pass User");
 
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "wrongpass@example.com",
-                "password": "WrongPassword123"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/login")
-                    .then()
-                    .statusCode(401)
-                    .body("message", equalTo("Invalid email or password"));
+            webTestClient
+                    .post()
+                    .uri("/api/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "wrongpass@example.com",
+                      "password": "WrongPassword123"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized()
+                    .expectBody()
+                    .jsonPath("$.message")
+                    .isEqualTo("Invalid email or password");
         }
 
         @Test
         @DisplayName("rejects non-existent email")
         void rejectsNonExistentEmail() {
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "nonexistent@example.com",
-                "password": "Password123"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/login")
-                    .then()
-                    .statusCode(401)
-                    .body("message", equalTo("Invalid email or password"));
+            webTestClient
+                    .post()
+                    .uri("/api/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "nonexistent@example.com",
+                      "password": "Password123"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized()
+                    .expectBody()
+                    .jsonPath("$.message")
+                    .isEqualTo("Invalid email or password");
         }
     }
 
@@ -288,18 +332,22 @@ class AuthFlowIntegrationTest {
         void updatesProfile() {
             String accessToken = registerAndGetToken("profile@example.com", "Password123", "Original Name");
 
-            given().header("Authorization", "Bearer " + accessToken)
-                    .contentType(ContentType.JSON)
-                    .body("""
-              {
-                "name": "Updated Name"
-              }
-              """)
-                    .when()
-                    .patch("/api/users/me")
-                    .then()
-                    .statusCode(200)
-                    .body("data.name", equalTo("Updated Name"));
+            webTestClient
+                    .patch()
+                    .uri("/api/users/me")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "name": "Updated Name"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isOk()
+                    .expectBody()
+                    .jsonPath("$.data.name")
+                    .isEqualTo("Updated Name");
         }
 
         @Test
@@ -308,45 +356,51 @@ class AuthFlowIntegrationTest {
             String accessToken = registerAndGetToken("password@example.com", "OldPassword123", "Password User");
 
             // Change password
-            given().header("Authorization", "Bearer " + accessToken)
-                    .contentType(ContentType.JSON)
-                    .body("""
-              {
-                "currentPassword": "OldPassword123",
-                "newPassword": "NewPassword123",
-                "confirmPassword": "NewPassword123"
-              }
-              """)
-                    .when()
-                    .patch("/api/users/me/password")
-                    .then()
-                    .statusCode(200);
+            webTestClient
+                    .patch()
+                    .uri("/api/users/me/password")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "currentPassword": "OldPassword123",
+                      "newPassword": "NewPassword123",
+                      "confirmPassword": "NewPassword123"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isOk();
 
             // Login with new password works
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "password@example.com",
-                "password": "NewPassword123"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/login")
-                    .then()
-                    .statusCode(200);
+            webTestClient
+                    .post()
+                    .uri("/api/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "password@example.com",
+                      "password": "NewPassword123"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isOk();
 
             // Login with old password fails
-            given().contentType(ContentType.JSON)
-                    .body("""
-              {
-                "email": "password@example.com",
-                "password": "OldPassword123"
-              }
-              """)
-                    .when()
-                    .post("/api/auth/login")
-                    .then()
-                    .statusCode(401);
+            webTestClient
+                    .post()
+                    .uri("/api/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("""
+                    {
+                      "email": "password@example.com",
+                      "password": "OldPassword123"
+                    }
+                    """)
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
         }
     }
 
@@ -357,40 +411,30 @@ class AuthFlowIntegrationTest {
         @Test
         @DisplayName("rejects expired/invalid access token")
         void rejectsInvalidToken() {
-            given().header("Authorization", "Bearer invalid.token.here")
-                    .when()
-                    .get("/api/users/me")
-                    .then()
-                    .statusCode(401);
+            webTestClient
+                    .get()
+                    .uri("/api/users/me")
+                    .header("Authorization", "Bearer invalid.token.here")
+                    .exchange()
+                    .expectStatus()
+                    .isUnauthorized();
         }
 
         @Test
         @DisplayName("rejects request without token")
         void rejectsNoToken() {
-            given().when().get("/api/users/me").then().statusCode(401);
+            webTestClient.get().uri("/api/users/me").exchange().expectStatus().isUnauthorized();
         }
     }
 
     // Helper methods
-    private void registerUser(String email, String password, String name) {
-        given().contentType(ContentType.JSON)
-                .body("""
-            {
-              "email": "%s",
-              "password": "%s",
-              "name": "%s",
-              "role": "MEMBER"
-            }
-            """.formatted(email, password, name))
-                .when()
-                .post("/api/auth/register")
-                .then()
-                .statusCode(anyOf(is(200), is(201)));
-    }
 
-    private String registerAndGetToken(String email, String password, String name) {
-        Response response = given().contentType(ContentType.JSON)
-                .body("""
+    private void registerUser(String email, String password, String name) {
+        webTestClient
+                .post()
+                .uri("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
                 {
                   "email": "%s",
                   "password": "%s",
@@ -398,13 +442,62 @@ class AuthFlowIntegrationTest {
                   "role": "MEMBER"
                 }
                 """.formatted(email, password, name))
-                .when()
-                .post("/api/auth/register")
-                .then()
-                .statusCode(anyOf(is(200), is(201)))
-                .extract()
-                .response();
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful();
+    }
 
-        return response.jsonPath().getString("data.tokens.accessToken");
+    private String registerAndGetToken(String email, String password, String name) {
+        var response = webTestClient
+                .post()
+                .uri("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                {
+                  "email": "%s",
+                  "password": "%s",
+                  "name": "%s",
+                  "role": "MEMBER"
+                }
+                """.formatted(email, password, name))
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody()
+                .returnResult();
+
+        String responseBody = new String(response.getResponseBody());
+        return extractJsonValue(responseBody, "data.tokens.accessToken");
+    }
+
+    /** Simple JSON value extractor for dot-notation paths. Works for simple cases like "data.tokens.accessToken". */
+    private String extractJsonValue(String json, String path) {
+        String[] parts = path.split("\\.");
+        String current = json;
+
+        for (String part : parts) {
+            int keyIndex = current.indexOf("\"" + part + "\"");
+            if (keyIndex == -1) {
+                return null;
+            }
+            current = current.substring(keyIndex + part.length() + 2);
+            int colonIndex = current.indexOf(":");
+            current = current.substring(colonIndex + 1).trim();
+
+            if (current.startsWith("\"")) {
+                // String value
+                int endQuote = current.indexOf("\"", 1);
+                if (endQuote == -1) {
+                    return null;
+                }
+                if (parts[parts.length - 1].equals(part)) {
+                    return current.substring(1, endQuote);
+                }
+            } else if (current.startsWith("{")) {
+                // Object - continue to next part
+                continue;
+            }
+        }
+        return null;
     }
 }

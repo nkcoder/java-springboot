@@ -18,7 +18,7 @@ import org.nkcoder.user.application.service.UserApplicationService;
 import org.nkcoder.user.domain.model.UserRole;
 import org.nkcoder.user.domain.service.TokenGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -57,13 +57,13 @@ public class AuthControllerIntegrationTest {
             mockMvc.perform(post("/api/auth/register")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
-                      {
-                      "email": "test@example.com",
-                       "password": "Password123",
-                       "name": "Test User",
-                       "role": "MEMBER"
-                      }
-                      """))
+                                {
+                                "email": "test@example.com",
+                                 "password": "Password123",
+                                 "name": "Test User",
+                                 "role": "MEMBER"
+                                }
+                                """))
                     .andExpect(status().isCreated());
         }
 
@@ -76,11 +76,11 @@ public class AuthControllerIntegrationTest {
             mockMvc.perform(post("/api/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
-                      {
-                        "email": "test@example.com",
-                        "password": "Password123"
-                      }
-                      """))
+                                {
+                                  "email": "test@example.com",
+                                  "password": "Password123"
+                                }
+                                """))
                     .andExpect(status().isOk());
         }
 
@@ -93,10 +93,10 @@ public class AuthControllerIntegrationTest {
             mockMvc.perform(post("/api/auth/refresh")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
-                      {
-                        "refreshToken": "some-refresh-token"
-                      }
-                      """))
+                                {
+                                  "refreshToken": "some-refresh-token"
+                                }
+                                """))
                     .andExpect(status().isOk());
         }
     }
@@ -117,8 +117,8 @@ public class AuthControllerIntegrationTest {
             mockMvc.perform(patch("/api/users/me")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
-                       {"name": "New Name"}
-                      """))
+                                 {"name": "New Name"}
+                                """))
                     .andExpect(status().isUnauthorized());
         }
 
@@ -128,12 +128,12 @@ public class AuthControllerIntegrationTest {
             mockMvc.perform(patch("/api/users/me/password")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
-                      {
-                        "currentPassword": "Old123",
-                        "newPassword": "New123",
-                        "confirmPassword": "New123"
-                      }
-                      """))
+                                {
+                                  "currentPassword": "Old123",
+                                  "newPassword": "New123",
+                                  "confirmPassword": "New123"
+                                }
+                                """))
                     .andExpect(status().isUnauthorized());
         }
     }
@@ -154,8 +154,8 @@ public class AuthControllerIntegrationTest {
             mockMvc.perform(patch("/api/admin/users/{userId}", UUID.randomUUID())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("""
-                      {"name": "Admin Update"}
-                      """))
+                                {"name": "Admin Update"}
+                                """))
                     .andExpect(status().isUnauthorized());
         }
     }
