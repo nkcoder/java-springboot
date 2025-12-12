@@ -5,7 +5,6 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("org.graalvm.buildtools.native") version "0.11.1"
     id("org.jetbrains.kotlin.jvm") version "2.2.21"
-    id("io.swagger.core.v3.swagger-gradle-plugin") version "2.2.34"
     id("org.flywaydb.flyway") version "11.11.1"
     id("com.diffplug.spotless") version "8.1.0"
     id("com.google.protobuf") version "0.9.5"
@@ -63,12 +62,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.3")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
-
-    // Swagger
-    implementation("io.swagger.core.v3:swagger-models:2.2.34")
-    implementation("io.swagger.core.v3:swagger-core:2.2.34")
-    implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
-    runtimeOnly("org.glassfish.jaxb:jaxb-runtime:4.0.5")
 
     // gRPC and Protobuf
     implementation("io.grpc:grpc-netty-shaded:1.77.0")

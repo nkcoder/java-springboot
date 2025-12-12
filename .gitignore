@@ -5,3 +5,8 @@ target
 .DS_Store
 logs
 !auto/build
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
