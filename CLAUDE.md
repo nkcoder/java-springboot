@@ -4,7 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Java 21 Spring Boot 3.5.3 microservice implementing user authentication and management with both REST and gRPC APIs. The service features JWT authentication with refresh token rotation, token families for multi-device support, role-based access control (ADMIN/MEMBER), and PostgreSQL persistence with Flyway migrations.
+This is a **Java 25 Spring Boot 4.0** modular monolith implementing user authentication and management with both REST and gRPC APIs. The application uses **Spring Modulith** for module boundaries and event-driven communication between modules. The service features JWT authentication with refresh token rotation, token families for multi-device support, role-based access control (ADMIN/MEMBER), and PostgreSQL persistence with Flyway migrations.
+
+### Key Technologies
+- **Java 25** with virtual threads (Project Loom)
+- **Spring Boot 4.0** with Spring Framework 7.0
+- **Spring Modulith 2.0** for modular architecture
+- **PostgreSQL** with Flyway migrations
+- **gRPC** alongside REST APIs
 
 ## Build & Development Commands
 
@@ -40,11 +47,14 @@ docker compose up -d
 # Run all tests
 ./gradlew test
 
-# Run specific test class
-./gradlew test --tests "org.nkcoder.controller.AuthControllerTest"
+# Run module architecture verification
+./gradlew test --tests "org.nkcoder.ModulithArchitectureTest"
 
-# Run specific test method
-./gradlew test --tests "org.nkcoder.controller.AuthControllerTest.shouldRegisterUser"
+# Run specific test class
+./gradlew test --tests "org.nkcoder.user.application.service.AuthApplicationServiceTest"
+
+# Run integration tests
+./gradlew test --tests "org.nkcoder.user.integration.*"
 
 # Test with coverage
 ./gradlew test jacocoTestReport
@@ -76,28 +86,100 @@ docker compose up -d
 
 ## Architecture
 
-### Layered Structure
+### Spring Modulith Structure
 
-The codebase follows a strict layered architecture:
+The application is organized as a **modular monolith** using Spring Modulith. Each module has clear boundaries and communicates via events.
 
 ```
-Controller → Service → Repository → Entity
-     ↓          ↓
-   DTO      Mapper
+org.nkcoder/
+├── Application.java              ← Bootstrap (@Modulith entry point)
+│
+├── user/                         ← User Module (authentication & management)
+│   ├── package-info.java         ← @ApplicationModule(allowedDependencies = {"shared", "infrastructure"})
+│   ├── interfaces/rest/          ← REST controllers (public API)
+│   ├── application/service/      ← Application services (use case orchestration)
+│   ├── domain/                   ← Domain models, services, repositories (ports)
+│   └── infrastructure/           ← Adapters (JPA, Security, JWT)
+│
+├── notification/                 ← Notification Module (email/SMS)
+│   ├── package-info.java         ← @ApplicationModule(allowedDependencies = {"shared", "infrastructure"})
+│   ├── NotificationService.java  ← Public API
+│   └── application/              ← Event listeners
+│
+├── shared/                       ← Shared Kernel (OPEN module)
+│   ├── package-info.java         ← @ApplicationModule(type = OPEN)
+│   ├── kernel/domain/event/      ← Domain events (UserRegisteredEvent, etc.)
+│   ├── kernel/exception/         ← Common exceptions
+│   └── local/rest/               ← ApiResponse, GlobalExceptionHandler
+│
+└── infrastructure/               ← Infrastructure Module (OPEN module)
+    ├── package-info.java         ← @ApplicationModule(type = OPEN)
+    └── config/                   ← CORS, OpenAPI, JPA auditing configs
 ```
 
-**Key Directories** (under `src/main/java/org/nkcoder/`):
-- `controller/` - REST endpoints (AuthController, UserController, HealthController)
-- `service/` - Business logic (AuthService, UserService)
-- `repository/` - JPA repositories (UserRepository, RefreshTokenRepository)
-- `entity/` - JPA entities (User, RefreshToken)
-- `dto/` - Data Transfer Objects organized by feature (auth/, user/, common/)
-- `mapper/` - Entity-to-DTO mappers (UserMapper)
-- `security/` - Security components (JwtAuthenticationFilter, JwtAuthenticationEntryPoint)
-- `config/` - Configuration classes (SecurityConfig, JwtProperties, OpenApiConfig, etc.)
-- `util/` - Utilities (JwtUtil)
-- `grpc/` - gRPC service implementations (AuthGrpcService, GrpcMapper)
-- `exception/` - Custom exceptions (AuthenticationException, ValidationException, ResourceNotFoundException)
+### Module Dependency Rules
+
+```
+notification ──→ shared ←── user
+                   ↑
+              infrastructure
+```
+
+- **user** depends on: `shared`, `infrastructure`
+- **notification** depends on: `shared`, `infrastructure`
+- **shared** and **infrastructure** are OPEN modules (accessible by all)
+- Modules communicate via **domain events** (not direct calls)
+
+### Hexagonal Architecture (within User Module)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     User Module                              │
+├─────────────────────────────────────────────────────────────┤
+│  interfaces/rest/          ← Driving Adapters (REST API)    │
+│    ├── AuthController                                        │
+│    ├── UserController                                        │
+│    └── AdminUserController                                   │
+├─────────────────────────────────────────────────────────────┤
+│  application/service/      ← Use Case Orchestration         │
+│    ├── AuthApplicationService                                │
+│    └── UserApplicationService                                │
+├─────────────────────────────────────────────────────────────┤
+│  domain/                   ← Core Business Logic            │
+│    ├── model/              (User, RefreshToken, Value Objects)│
+│    ├── service/            (AuthenticationService, TokenGenerator - ports)│
+│    └── repository/         (UserRepository, RefreshTokenRepository - ports)│
+├─────────────────────────────────────────────────────────────┤
+│  infrastructure/           ← Driven Adapters                │
+│    ├── persistence/        (JPA entities, repository adapters)│
+│    └── security/           (JWT filter, SecurityConfig, BCrypt)│
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Components by Module
+
+**User Module** (`org.nkcoder.user`):
+- `interfaces/rest/` - AuthController, UserController, AdminUserController
+- `application/service/` - AuthApplicationService, UserApplicationService
+- `domain/model/` - User (aggregate), RefreshToken, value objects (Email, UserId, UserRole, etc.)
+- `domain/service/` - TokenGenerator, PasswordEncoder, AuthenticationService (ports)
+- `domain/repository/` - UserRepository, RefreshTokenRepository (ports)
+- `infrastructure/persistence/` - JPA entities, repository adapters
+- `infrastructure/security/` - JwtAuthenticationFilter, SecurityConfig, JwtTokenGeneratorAdapter
+
+**Notification Module** (`org.nkcoder.notification`):
+- `NotificationService` - Public API for sending notifications
+- `application/UserEventListener` - Listens to UserRegisteredEvent
+
+**Shared Module** (`org.nkcoder.shared`):
+- `kernel/domain/event/` - DomainEvent, UserRegisteredEvent, UserProfileUpdatedEvent
+- `kernel/domain/valueobject/` - AggregateRoot base class
+- `kernel/exception/` - AuthenticationException, ValidationException, ResourceNotFoundException
+- `local/rest/` - ApiResponse, GlobalExceptionHandler
+- `local/event/` - SpringDomainEventPublisher
+
+**Infrastructure Module** (`org.nkcoder.infrastructure`):
+- `config/` - CorsProperties, OpenApiConfig, JpaAuditingConfig, WebConfig
 
 ### Security & Authentication
 
@@ -120,10 +202,10 @@ Controller → Service → Repository → Entity
 - `POST /api/users/auth/logout-single` - Deletes only current refresh token (single device)
 
 **JWT Authentication Flow**:
-1. JwtAuthenticationFilter extracts token from `Authorization: Bearer {token}` header
-2. Token validated and claims extracted via JwtUtil
-3. UsernamePasswordAuthenticationToken created with role authorities (ROLE_MEMBER/ROLE_ADMIN)
-4. Context stored in SecurityContextHolder
+1. `JwtAuthenticationFilter` (in `user.infrastructure.security`) extracts token from `Authorization: Bearer {token}` header
+2. Token validated via `TokenGenerator` port (implemented by `JwtTokenGeneratorAdapter`)
+3. `UsernamePasswordAuthenticationToken` created with role authorities (ROLE_MEMBER/ROLE_ADMIN)
+4. Context stored in `SecurityContextHolder`
 5. Request attributes set: userId, email, role (accessible in controllers)
 
 **Security Configuration**:
@@ -206,13 +288,36 @@ PATCH  /api/users/{userId}/password    - Reset password (admin only)
 - `ValidationException` - Business validation failures (duplicate email, password mismatch)
 - `ResourceNotFoundException` - Entity not found by ID
 
+### Event-Driven Communication
+
+Modules communicate via domain events using Spring Modulith's event infrastructure:
+
+**Publishing Events** (in User module):
+```java
+// In AuthApplicationService after registration
+domainEventPublisher.publish(new UserRegisteredEvent(user.getId(), user.getEmail(), user.getName()));
+```
+
+**Listening to Events** (in Notification module):
+```java
+@Component
+public class UserEventListener {
+    @ApplicationModuleListener
+    public void onUserRegistered(UserRegisteredEvent event) {
+        notificationService.sendWelcomeEmail(event.email(), event.userName());
+    }
+}
+```
+
+**Event Publication Table**: Spring Modulith persists events to `event_publication` table for reliable delivery (transactional outbox pattern).
+
 ### Configuration Management
 
 **Profiles**:
 - `local` - Local development with Docker Compose
-- `docker` - Docker container environment
+- `dev` - Development environment with external database
 - `prod` - Production with environment variables
-- `test` - Test profile with in-memory/test database
+- `test` - Test profile with TestContainers
 
 **Environment Variables** (required for production):
 ```bash
@@ -237,10 +342,11 @@ CLIENT_URL=http://localhost:3000
 - `V1.1__create_tables.sql` - Initial schema (users, refresh_tokens tables)
 - `V1.2__seeding_users.sql` - Seed data (admin@timor.com, demo@timor.com)
 - `V1.3__update_users_role.sql` - Schema updates
+- `V1.4__create_event_publication_table.sql` - Spring Modulith event publication table
 
 **Migration Best Practices**:
 - Never modify existing migrations (create new ones)
-- Use sequential versioning: V1.1, V1.2, V1.3, etc.
+- Use sequential versioning: V1.1, V1.2, V1.3, etc. (uppercase V required!)
 - Validate migrations with `validate-on-migrate: true`
 - Baseline existing databases with `baseline-on-migrate: true`
 
@@ -268,15 +374,28 @@ CLIENT_URL=http://localhost:3000
 **Test Types**:
 - Unit tests: `@WebMvcTest` for controllers, `@MockBean` for services
 - Integration tests: `@SpringBootTest` with TestContainers for PostgreSQL
+- Module tests: `ModulithArchitectureTest` verifies module boundaries
 - Security tests: Use `@WithMockUser` or custom security setup
 
-**Base Test Classes**:
-- `BaseControllerTest` - Base for controller unit tests (MockMvc setup)
-- `BaseSecurityControllerTest` - Base with security context
-- `IntegrationTestingBase` - Base for integration tests (TestContainers)
+**Module Verification Test**:
+```java
+class ModulithArchitectureTest {
+    ApplicationModules modules = ApplicationModules.of(Application.class);
+
+    @Test
+    void verifyModuleStructure() {
+        modules.verify();  // Fails on illegal cross-module dependencies
+    }
+}
+```
+
+**Integration Test Setup**:
+- Tests in `org.nkcoder.user.integration/` package
+- Use `@SpringBootTest(classes = Application.class)` to specify bootstrap class
+- WebTestClient for REST API testing (Spring Boot 4 compatible)
 
 **Test Configuration**:
-- `TestConfig.java` provides test-specific beans
+- `TestContainersConfiguration.java` provides PostgreSQL container
 - `application-test.yml` configures test profile
 - TestContainers automatically manages PostgreSQL instance
 
@@ -301,9 +420,10 @@ CLIENT_URL=http://localhost:3000
 - Packages: lowercase (e.g., org.nkcoder.service)
 
 **Package Organization**:
-- DTOs grouped by feature: `dto/auth/`, `dto/user/`, `dto/common/`
-- One entity per file
-- One controller per resource domain (Auth, User)
+- Modules are direct sub-packages of `org.nkcoder`
+- Each module follows hexagonal architecture: `interfaces/`, `application/`, `domain/`, `infrastructure/`
+- Domain events shared across modules go in `shared.kernel.domain.event/`
+- One controller per resource domain (Auth, User, AdminUser)
 
 **Dependency Injection**:
 - Prefer constructor injection over field injection
@@ -350,17 +470,31 @@ CLIENT_URL=http://localhost:3000
 
 ## Common Development Tasks
 
-**Adding a New Endpoint**:
-1. Create request/response DTOs in appropriate `dto/` subdirectory
-2. Add method to service layer with business logic
-3. Add controller method with @GetMapping/@PostMapping/@PatchMapping
-4. Add validation annotations to request DTO
-5. Add test cases in controller test class
-6. Run `./gradlew test` to verify
+**Adding a New Endpoint** (in User module):
+1. Create request DTO in `user/interfaces/rest/request/`
+2. Create command DTO in `user/application/dto/command/`
+3. Add mapper method in `user/interfaces/rest/mapper/`
+4. Add method to application service (`user/application/service/`)
+5. Add controller method in `user/interfaces/rest/`
+6. Add test cases
+7. Run `./gradlew test` to verify
+
+**Adding a New Module**:
+1. Create package `org.nkcoder.{modulename}/`
+2. Create `package-info.java` with `@ApplicationModule(allowedDependencies = {"shared", "infrastructure"})`
+3. Create module structure: `interfaces/`, `application/`, `domain/`, `infrastructure/`
+4. Add event listeners if needed to react to events from other modules
+5. Run `ModulithArchitectureTest` to verify module boundaries
+
+**Publishing Domain Events**:
+1. Create event record in `shared/kernel/domain/event/` (if cross-module) or `{module}/domain/event/` (if module-internal)
+2. Inject `DomainEventPublisher` in your service
+3. Call `domainEventPublisher.publish(event)` after business logic
+4. Create `@ApplicationModuleListener` in consuming module
 
 **Database Schema Change**:
 1. Create new migration file: `V{next_version}__{description}.sql` in `src/main/resources/db/migration/`
-2. Update entity class if needed
+2. Update JPA entity in `{module}/infrastructure/persistence/entity/` if needed
 3. Run `./gradlew bootRun` to apply migration
 4. Verify with database client or integration test
 
@@ -374,4 +508,25 @@ CLIENT_URL=http://localhost:3000
 **Password Requirements**: Must contain at least one lowercase letter, one uppercase letter, and one digit (enforced via @Pattern regex)
 
 **Role Assignment**: New users default to MEMBER role; ADMIN role must be explicitly assigned or seeded
+
+## Spring Modulith Guidelines
+
+**Module Boundaries**:
+- Never import internal classes from other modules (only public API)
+- Use domain events for cross-module communication
+- Shared code goes in `shared` module (marked as OPEN)
+- Run `./gradlew test` regularly - `ModulithArchitectureTest` catches violations
+
+**Event Best Practices**:
+- Events are immutable records
+- Events should be past-tense (`UserRegistered`, not `RegisterUser`)
+- Cross-module events go in `shared.kernel.domain.event/`
+- Use `@ApplicationModuleListener` for reliable event handling (auto-retry, persistence)
+
+**Future Microservice Extraction**:
+When ready to extract a module as a microservice:
+1. Events become messages (Kafka/RabbitMQ)
+2. REST/gRPC calls replace direct method calls
+3. Module's `infrastructure/` adapters change, domain stays the same
+4. Database can be separated per module
 

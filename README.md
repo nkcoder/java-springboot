@@ -1,6 +1,6 @@
 # User Service - Java/Spring Boot
 
-A comprehensive user authentication and management service built with Java 21 and Spring Boot 3.
+A comprehensive user authentication and management service built with **Java 25** and **Spring Boot 4**, architected as a **modular monolith** using **Spring Modulith**.
 
 ## Features
 
@@ -27,21 +27,23 @@ A comprehensive user authentication and management service built with Java 21 an
 
 ## Tech Stack
 
-- **Java 25** (Latest LTS)
-- **Spring Boot 4**
-- **Spring Security 6**
+- **Java 25** with Virtual Threads (Project Loom)
+- **Spring Boot 4.0** with Spring Framework 7
+- **Spring Modulith 2.0** for modular architecture
+- **Spring Security 7**
 - **Spring Data JPA**
 - **PostgreSQL 17**
-- **JWT (JJWT)**
+- **gRPC** alongside REST APIs
+- **JWT (JJWT 0.13)**
 - **Gradle 8+**
 - **Docker & Docker Compose**
-- **Swagger/OpenAPI 3**
+- **Swagger/OpenAPI 3** (springdoc-openapi)
 
 ## Quick Start
 
 ### Prerequisites
 
-- Java 21
+- Java 25
 - Gradle 8+
 - PostgreSQL 17+
 - Docker & Docker Compose (optional)
@@ -223,8 +225,14 @@ curl -X POST http://localhost:3001/api/users/auth/refresh \
 ### Code Quality
 
 ```bash
-# Check code style
-./gradlew checkstyleMain checkstyleTest
+# Apply code formatting (Palantir Java Format)
+./gradlew spotlessApply
+
+# Check code formatting
+./gradlew spotlessCheck
+
+# Verify module architecture
+./gradlew test --tests "org.nkcoder.ModulithArchitectureTest"
 
 # Generate dependency report
 ./gradlew dependencyInsight --dependency <dependency-name>
@@ -232,33 +240,54 @@ curl -X POST http://localhost:3001/api/users/auth/refresh \
 
 ## Project Structure
 
+The application uses **Spring Modulith** for a modular monolith architecture:
+
 ```
-user-service/
-├── src/
-│   ├── main/
-│   │   ├── java/com/timor/user/
-│   │   │   ├── config/         # Configuration classes
-│   │   │   ├── controller/     # REST controllers
-│   │   │   ├── dto/            # Data Transfer Objects
-│   │   │   ├── entity/         # JPA entities
-│   │   │   ├── enums/          # Enums
-│   │   │   ├── exception/      # Custom exceptions
-│   │   │   ├── mapper/         # Entity-DTO mappers
-│   │   │   ├── repository/     # Data repositories
-│   │   │   ├── security/       # Security components
-│   │   │   ├── service/        # Business logic
-│   │   │   └── util/           # Utility classes
-│   │   └── resources/
-│   │       ├── application.yml
-│   │       └── application-docker.yml
-│   └── test/                   # Test files
-├── scripts/
-│   └── init.sql               # Database initialization
-├── docker-compose.yml
-├── Dockerfile
-├── build.gradle
-└── README.md
+src/main/java/org/nkcoder/
+├── Application.java                 # Bootstrap (@Modulith entry point)
+│
+├── user/                            # User Module
+│   ├── package-info.java            # @ApplicationModule definition
+│   ├── interfaces/rest/             # REST controllers
+│   │   ├── AuthController.java
+│   │   ├── UserController.java
+│   │   └── AdminUserController.java
+│   ├── application/service/         # Application services
+│   │   ├── AuthApplicationService.java
+│   │   └── UserApplicationService.java
+│   ├── domain/                      # Domain layer
+│   │   ├── model/                   # Aggregates, entities, value objects
+│   │   ├── service/                 # Domain services (ports)
+│   │   └── repository/              # Repository interfaces (ports)
+│   └── infrastructure/              # Infrastructure layer
+│       ├── persistence/             # JPA entities & repository adapters
+│       └── security/                # JWT filter, SecurityConfig
+│
+├── notification/                    # Notification Module
+│   ├── package-info.java
+│   ├── NotificationService.java     # Public API
+│   └── application/                 # Event listeners
+│
+├── shared/                          # Shared Kernel (OPEN module)
+│   ├── kernel/
+│   │   ├── domain/event/            # Domain events
+│   │   └── exception/               # Common exceptions
+│   └── local/rest/                  # ApiResponse, GlobalExceptionHandler
+│
+└── infrastructure/                  # Infrastructure Module (OPEN module)
+    └── config/                      # CORS, OpenAPI, JPA auditing
 ```
+
+### Module Dependencies
+
+```
+notification ──→ shared ←── user
+                   ↑
+              infrastructure
+```
+
+- Modules communicate via **domain events** (not direct calls)
+- `shared` and `infrastructure` are OPEN modules (accessible by all)
 
 ## Security Features
 
@@ -281,9 +310,10 @@ user-service/
 
 ### Application Profiles
 
-- `default`: Local development
-- `docker`: Docker container environment
-- `test`: Testing environment
+- `local`: Local development with Docker Compose for PostgreSQL
+- `dev`: Development environment with external database
+- `prod`: Production environment
+- `test`: Testing with TestContainers
 
 ### Key Configuration Properties
 
@@ -307,6 +337,8 @@ spring:
 
 ## References
 
+- [Spring Modulith Documentation](https://docs.spring.io/spring-modulith/reference/)
+- [Spring Boot 4.0 Migration Guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide)
 - [Implementing Domain Driven Design with Spring](https://github.com/maciejwalkowiak/implementing-ddd-with-spring-talk)
 
 ## License
