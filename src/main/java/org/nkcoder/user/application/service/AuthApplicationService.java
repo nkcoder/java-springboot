@@ -160,6 +160,7 @@ public class AuthApplicationService {
         }
     }
 
+    @Transactional
     public void logout(String refreshToken) {
         logger.debug("Logging out user (all devices)");
 
@@ -172,6 +173,7 @@ public class AuthApplicationService {
         });
     }
 
+    @Transactional
     public void logoutSingle(String refreshToken) {
         logger.debug("Logging out user (single device)");
 
@@ -180,6 +182,7 @@ public class AuthApplicationService {
         logger.debug("Logged out from current device");
     }
 
+    @Transactional
     public void cleanupExpiredTokens() {
         logger.debug("Cleaning up expired refresh tokens");
         refreshTokenRepository.deleteExpiredTokens(LocalDateTime.now());
