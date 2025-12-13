@@ -1,6 +1,8 @@
 package org.nkcoder.user.application.service;
 
 import java.time.LocalDateTime;
+import org.nkcoder.shared.kernel.domain.event.DomainEventPublisher;
+import org.nkcoder.shared.kernel.domain.event.UserRegisteredEvent;
 import org.nkcoder.shared.kernel.exception.AuthenticationException;
 import org.nkcoder.shared.kernel.exception.ValidationException;
 import org.nkcoder.user.application.dto.command.LoginCommand;
@@ -42,6 +44,7 @@ public class AuthApplicationService {
     private final TokenGenerator tokenGenerator;
     private final AuthenticationService authenticationService;
     private final TokenRotationService tokenRotationService;
+    private final DomainEventPublisher eventPublisher;
 
     public AuthApplicationService(
             UserRepository userRepository,
@@ -49,13 +52,15 @@ public class AuthApplicationService {
             PasswordEncoder passwordEncoder,
             TokenGenerator tokenGenerator,
             AuthenticationService authenticationService,
-            TokenRotationService tokenRotationService) {
+            TokenRotationService tokenRotationService,
+            DomainEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
         this.authenticationService = authenticationService;
         this.tokenRotationService = tokenRotationService;
+        this.eventPublisher = eventPublisher;
     }
 
     public AuthResult register(RegisterCommand command) {
@@ -74,6 +79,9 @@ public class AuthApplicationService {
 
         user = userRepository.save(user);
         logger.debug("User registered with ID: {}", user.getId().value());
+
+        eventPublisher.publish(new UserRegisteredEvent(
+                user.getId().value(), user.getEmail().value(), user.getName().value()));
 
         // Generate tokens
         TokenFamily tokenFamily = TokenFamily.generate();

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.nkcoder.shared.kernel.domain.event.DomainEventPublisher;
 import org.nkcoder.shared.kernel.exception.AuthenticationException;
 import org.nkcoder.shared.kernel.exception.ValidationException;
 import org.nkcoder.user.application.dto.command.LoginCommand;
@@ -62,6 +63,9 @@ class AuthApplicationServiceTest {
     @Mock
     private TokenRotationService tokenRotationService;
 
+    @Mock
+    private DomainEventPublisher eventPublisher;
+
     private AuthApplicationService authApplicationService;
 
     @BeforeEach
@@ -72,7 +76,8 @@ class AuthApplicationServiceTest {
                 passwordEncoder,
                 tokenGenerator,
                 authenticationService,
-                tokenRotationService);
+                tokenRotationService,
+                eventPublisher);
     }
 
     @Nested
