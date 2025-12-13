@@ -1,6 +1,8 @@
 package org.nkcoder.user.application.service;
 
 import java.time.LocalDateTime;
+import org.nkcoder.shared.kernel.domain.event.DomainEventPublisher;
+import org.nkcoder.shared.kernel.domain.event.UserRegisteredEvent;
 import org.nkcoder.shared.kernel.exception.AuthenticationException;
 import org.nkcoder.shared.kernel.exception.ValidationException;
 import org.nkcoder.user.application.dto.command.LoginCommand;
@@ -27,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Application service for authentication use cases. Orchestrates domain objects and infrastructure services. */
 @Service
-@Transactional
 public class AuthApplicationService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthApplicationService.class);
@@ -42,6 +43,7 @@ public class AuthApplicationService {
     private final TokenGenerator tokenGenerator;
     private final AuthenticationService authenticationService;
     private final TokenRotationService tokenRotationService;
+    private final DomainEventPublisher eventPublisher;
 
     public AuthApplicationService(
             UserRepository userRepository,
@@ -49,15 +51,18 @@ public class AuthApplicationService {
             PasswordEncoder passwordEncoder,
             TokenGenerator tokenGenerator,
             AuthenticationService authenticationService,
-            TokenRotationService tokenRotationService) {
+            TokenRotationService tokenRotationService,
+            DomainEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenGenerator = tokenGenerator;
         this.authenticationService = authenticationService;
         this.tokenRotationService = tokenRotationService;
+        this.eventPublisher = eventPublisher;
     }
 
+    @Transactional
     public AuthResult register(RegisterCommand command) {
         logger.debug("Registering new user with email: {}", command.email());
 
@@ -75,6 +80,9 @@ public class AuthApplicationService {
         user = userRepository.save(user);
         logger.debug("User registered with ID: {}", user.getId().value());
 
+        eventPublisher.publish(new UserRegisteredEvent(
+                user.getId().value(), user.getEmail().value(), user.getName().value()));
+
         // Generate tokens
         TokenFamily tokenFamily = TokenFamily.generate();
         TokenPair tokens = tokenRotationService.generateTokens(user, tokenFamily);
@@ -85,6 +93,7 @@ public class AuthApplicationService {
         return AuthResult.of(user.getId().value(), user.getEmail().value(), user.getRole(), tokens);
     }
 
+    @Transactional()
     public AuthResult login(LoginCommand command) {
         logger.debug("Logging in user with email: {}", command.email());
 
@@ -151,6 +160,7 @@ public class AuthApplicationService {
         }
     }
 
+    @Transactional
     public void logout(String refreshToken) {
         logger.debug("Logging out user (all devices)");
 
@@ -163,6 +173,7 @@ public class AuthApplicationService {
         });
     }
 
+    @Transactional
     public void logoutSingle(String refreshToken) {
         logger.debug("Logging out user (single device)");
 
@@ -171,6 +182,7 @@ public class AuthApplicationService {
         logger.debug("Logged out from current device");
     }
 
+    @Transactional
     public void cleanupExpiredTokens() {
         logger.debug("Cleaning up expired refresh tokens");
         refreshTokenRepository.deleteExpiredTokens(LocalDateTime.now());
