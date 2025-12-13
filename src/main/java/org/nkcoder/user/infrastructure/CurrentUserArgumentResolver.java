@@ -1,9 +1,10 @@
-package org.nkcoder.infrastructure.resolver;
+package org.nkcoder.user.infrastructure;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.nkcoder.shared.local.annotation.CurrentUser;
+import org.nkcoder.user.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -13,7 +14,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 /**
  * Resolves method parameters annotated with {@link CurrentUser} by extracting the user ID from request attributes set
- * by {@link org.nkcoder.infrastructure.security.JwtAuthenticationFilter}
+ * by {@link JwtAuthenticationFilter}
  */
 @Component
 public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {

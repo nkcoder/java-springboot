@@ -1,4 +1,4 @@
-package org.nkcoder.integration;
+package org.nkcoder.user.integration;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;

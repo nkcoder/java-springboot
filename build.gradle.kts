@@ -4,12 +4,12 @@ plugins {
     id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.graalvm.buildtools.native") version "0.11.1"
-    id("org.jetbrains.kotlin.jvm") version "2.2.21"
     id("org.flywaydb.flyway") version "11.11.1"
     id("com.diffplug.spotless") version "8.1.0"
     id("com.google.protobuf") version "0.9.5"
     java
     jacoco
+    kotlin("jvm") version "2.2.21"
 }
 
 group = "org.nkcoder"
@@ -27,6 +27,7 @@ repositories {
 
 extra["testcontainersVersion"] = "1.21.3"
 extra["jjwtVersion"] = "0.13.0"
+extra["springModulithVersion"] = "2.0.0"
 
 dependencies {
     // Spring Boot Starters
@@ -37,6 +38,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-jackson")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")
+    implementation("org.springframework.modulith:spring-modulith-starter-core")
+    implementation("org.springframework.modulith:spring-modulith-starter-jpa")
 
     // Database
     implementation("org.springframework.boot:spring-boot-starter-flyway")
@@ -62,6 +65,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.3")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 
     // gRPC and Protobuf
     implementation("io.grpc:grpc-netty-shaded:1.77.0")
@@ -70,11 +74,13 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java:4.33.1")
     implementation("jakarta.annotation:jakarta.annotation-api:3.0.0")
     implementation("org.springframework.grpc:spring-grpc-spring-boot-starter:1.0.0")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 dependencyManagement {
     imports {
         mavenBom("org.testcontainers:testcontainers-bom:${property("testcontainersVersion")}")
+        mavenBom("org.springframework.modulith:spring-modulith-bom:${property("springModulithVersion")}")
     }
 }
 
