@@ -1,4 +1,4 @@
-package org.nkcoder.infrastructure.security;
+package org.nkcoder.user.infrastructure.security;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;

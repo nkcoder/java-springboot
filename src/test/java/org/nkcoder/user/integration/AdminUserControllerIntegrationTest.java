@@ -1,4 +1,4 @@
-package org.nkcoder.integration;
+package org.nkcoder.user.integration;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -148,12 +148,12 @@ class AdminUserControllerIntegrationTest {
                     .header("Authorization", "Bearer " + adminToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "name": "Admin Updated Name",
-                      "emailVerified": true,
-                      "role": "ADMIN"
-                    }
-                    """)
+                        {
+                          "name": "Admin Updated Name",
+                          "emailVerified": true,
+                          "role": "ADMIN"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isOk()
@@ -202,10 +202,10 @@ class AdminUserControllerIntegrationTest {
                     .header("Authorization", "Bearer " + adminToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "newPassword": "NewPassword123"
-                    }
-                    """)
+                        {
+                          "newPassword": "NewPassword123"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isOk();
@@ -216,11 +216,11 @@ class AdminUserControllerIntegrationTest {
                     .uri("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "target3@example.com",
-                      "password": "NewPassword123"
-                    }
-                    """)
+                        {
+                          "email": "target3@example.com",
+                          "password": "NewPassword123"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isOk();
@@ -231,11 +231,11 @@ class AdminUserControllerIntegrationTest {
                     .uri("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "target3@example.com",
-                      "password": "OldPassword123"
-                    }
-                    """)
+                        {
+                          "email": "target3@example.com",
+                          "password": "OldPassword123"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isUnauthorized();
@@ -250,13 +250,13 @@ class AdminUserControllerIntegrationTest {
                 .uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("""
-                {
-                  "email": "%s",
-                  "password": "%s",
-                  "name": "%s",
-                  "role": "%s"
-                }
-                """.formatted(email, password, name, role))
+                    {
+                      "email": "%s",
+                      "password": "%s",
+                      "name": "%s",
+                      "role": "%s"
+                    }
+                    """.formatted(email, password, name, role))
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
@@ -273,13 +273,13 @@ class AdminUserControllerIntegrationTest {
                 .uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("""
-                {
-                  "email": "%s",
-                  "password": "%s",
-                  "name": "%s",
-                  "role": "%s"
-                }
-                """.formatted(email, password, name, role))
+                    {
+                      "email": "%s",
+                      "password": "%s",
+                      "name": "%s",
+                      "role": "%s"
+                    }
+                    """.formatted(email, password, name, role))
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()

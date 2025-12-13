@@ -1,4 +1,4 @@
-package org.nkcoder.integration;
+package org.nkcoder.user.integration;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,13 +36,13 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/register")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "flow@example.com",
-                      "password": "Password123",
-                      "name": "Flow Test User",
-                      "role": "MEMBER"
-                    }
-                    """)
+                        {
+                          "email": "flow@example.com",
+                          "password": "Password123",
+                          "name": "Flow Test User",
+                          "role": "MEMBER"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .is2xxSuccessful()
@@ -79,10 +79,10 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/refresh")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "refreshToken": "%s"
-                    }
-                    """.formatted(refreshToken))
+                        {
+                          "refreshToken": "%s"
+                        }
+                        """.formatted(refreshToken))
                     .exchange()
                     .expectStatus()
                     .isOk()
@@ -103,10 +103,10 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/refresh")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "refreshToken": "%s"
-                    }
-                    """.formatted(refreshToken))
+                        {
+                          "refreshToken": "%s"
+                        }
+                        """.formatted(refreshToken))
                     .exchange()
                     .expectStatus()
                     .isUnauthorized();
@@ -127,10 +127,10 @@ class AuthFlowIntegrationTest {
                     .header("Authorization", "Bearer " + newAccessToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "refreshToken": "%s"
-                    }
-                    """.formatted(newRefreshToken))
+                        {
+                          "refreshToken": "%s"
+                        }
+                        """.formatted(newRefreshToken))
                     .exchange()
                     .expectStatus()
                     .isOk();
@@ -141,10 +141,10 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/refresh")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "refreshToken": "%s"
-                    }
-                    """.formatted(newRefreshToken))
+                        {
+                          "refreshToken": "%s"
+                        }
+                        """.formatted(newRefreshToken))
                     .exchange()
                     .expectStatus()
                     .isUnauthorized();
@@ -163,13 +163,13 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/register")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "newuser@example.com",
-                      "password": "Password123",
-                      "name": "New User",
-                      "role": "MEMBER"
-                    }
-                    """)
+                        {
+                          "email": "newuser@example.com",
+                          "password": "Password123",
+                          "name": "New User",
+                          "role": "MEMBER"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .is2xxSuccessful()
@@ -191,13 +191,13 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/register")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "duplicate@example.com",
-                      "password": "Password123",
-                      "name": "First User",
-                      "role": "MEMBER"
-                    }
-                    """)
+                        {
+                          "email": "duplicate@example.com",
+                          "password": "Password123",
+                          "name": "First User",
+                          "role": "MEMBER"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .is2xxSuccessful();
@@ -208,13 +208,13 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/register")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "duplicate@example.com",
-                      "password": "Password123",
-                      "name": "Second User",
-                      "role": "MEMBER"
-                    }
-                    """)
+                        {
+                          "email": "duplicate@example.com",
+                          "password": "Password123",
+                          "name": "Second User",
+                          "role": "MEMBER"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isBadRequest()
@@ -231,13 +231,13 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/register")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "UPPERCASE@EXAMPLE.COM",
-                      "password": "Password123",
-                      "name": "Uppercase Email",
-                      "role": "MEMBER"
-                    }
-                    """)
+                        {
+                          "email": "UPPERCASE@EXAMPLE.COM",
+                          "password": "Password123",
+                          "name": "Uppercase Email",
+                          "role": "MEMBER"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .is2xxSuccessful()
@@ -263,11 +263,11 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "login@example.com",
-                      "password": "Password1234"
-                    }
-                    """)
+                        {
+                          "email": "login@example.com",
+                          "password": "Password1234"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isOk()
@@ -288,11 +288,11 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "wrongpass@example.com",
-                      "password": "WrongPassword123"
-                    }
-                    """)
+                        {
+                          "email": "wrongpass@example.com",
+                          "password": "WrongPassword123"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isUnauthorized()
@@ -309,11 +309,11 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "nonexistent@example.com",
-                      "password": "Password123"
-                    }
-                    """)
+                        {
+                          "email": "nonexistent@example.com",
+                          "password": "Password123"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isUnauthorized()
@@ -338,10 +338,10 @@ class AuthFlowIntegrationTest {
                     .header("Authorization", "Bearer " + accessToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "name": "Updated Name"
-                    }
-                    """)
+                        {
+                          "name": "Updated Name"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isOk()
@@ -362,12 +362,12 @@ class AuthFlowIntegrationTest {
                     .header("Authorization", "Bearer " + accessToken)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "currentPassword": "OldPassword123",
-                      "newPassword": "NewPassword123",
-                      "confirmPassword": "NewPassword123"
-                    }
-                    """)
+                        {
+                          "currentPassword": "OldPassword123",
+                          "newPassword": "NewPassword123",
+                          "confirmPassword": "NewPassword123"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isOk();
@@ -378,11 +378,11 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "password@example.com",
-                      "password": "NewPassword123"
-                    }
-                    """)
+                        {
+                          "email": "password@example.com",
+                          "password": "NewPassword123"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isOk();
@@ -393,11 +393,11 @@ class AuthFlowIntegrationTest {
                     .uri("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue("""
-                    {
-                      "email": "password@example.com",
-                      "password": "OldPassword123"
-                    }
-                    """)
+                        {
+                          "email": "password@example.com",
+                          "password": "OldPassword123"
+                        }
+                        """)
                     .exchange()
                     .expectStatus()
                     .isUnauthorized();
@@ -435,13 +435,13 @@ class AuthFlowIntegrationTest {
                 .uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("""
-                {
-                  "email": "%s",
-                  "password": "%s",
-                  "name": "%s",
-                  "role": "MEMBER"
-                }
-                """.formatted(email, password, name))
+                    {
+                      "email": "%s",
+                      "password": "%s",
+                      "name": "%s",
+                      "role": "MEMBER"
+                    }
+                    """.formatted(email, password, name))
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful();
@@ -453,13 +453,13 @@ class AuthFlowIntegrationTest {
                 .uri("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("""
-                {
-                  "email": "%s",
-                  "password": "%s",
-                  "name": "%s",
-                  "role": "MEMBER"
-                }
-                """.formatted(email, password, name))
+                    {
+                      "email": "%s",
+                      "password": "%s",
+                      "name": "%s",
+                      "role": "MEMBER"
+                    }
+                    """.formatted(email, password, name))
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()

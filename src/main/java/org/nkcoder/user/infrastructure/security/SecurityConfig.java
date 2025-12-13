@@ -1,7 +1,6 @@
-package org.nkcoder.infrastructure.config;
+package org.nkcoder.user.infrastructure.security;
 
-import org.nkcoder.infrastructure.security.JwtAuthenticationEntryPoint;
-import org.nkcoder.infrastructure.security.JwtAuthenticationFilter;
+import org.nkcoder.infrastructure.config.CorsProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
