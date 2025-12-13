@@ -1,16 +1,20 @@
 package org.nkcoder.notification;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class NotificationService {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public void sendWelcomeEmail(String email, String userName) {
         // TODO: implement email sending
-        System.out.println("Sending Welcome email to " + email + ", for user: " + userName);
+        logger.info("Sending Welcome email to {}, for user: {}", email, userName);
     }
 
     public void sendPasswordResetEmail(String email, String userName) {
         // TODO: implement password reset email
-        System.out.println("Sending password reset email to " + email + ", for user: " + userName);
+        logger.info("Sending password reset email to {}, for user: {}", email, userName);
     }
 }

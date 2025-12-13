@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Application service for authentication use cases. Orchestrates domain objects and infrastructure services. */
 @Service
-@Transactional
 public class AuthApplicationService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthApplicationService.class);
@@ -63,6 +62,7 @@ public class AuthApplicationService {
         this.eventPublisher = eventPublisher;
     }
 
+    @Transactional
     public AuthResult register(RegisterCommand command) {
         logger.debug("Registering new user with email: {}", command.email());
 
@@ -93,6 +93,7 @@ public class AuthApplicationService {
         return AuthResult.of(user.getId().value(), user.getEmail().value(), user.getRole(), tokens);
     }
 
+    @Transactional()
     public AuthResult login(LoginCommand command) {
         logger.debug("Logging in user with email: {}", command.email());
 
