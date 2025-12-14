@@ -150,7 +150,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
-          builder: : ${{ steps.buildx.outputs.name }}
+          builder: ${{ steps.buildx.outputs.name }}
           context: .
           push: false
           load: true
