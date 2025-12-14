@@ -1,0 +1,25 @@
+# Secrets and credentials
+.env
+.env.*
+*.pem
+*.key
+*credentials*
+*secret*
+.aws/
+.ssh/
+
+# Git (may contain secrets in history)
+.git
+
+# IDE configs (may contain tokens)
+.idea/
+.vscode/
+.settings/
+.gradle/
+.claude
+
+# Local development
+docker-compose*.yml
+
+logs/
+docs/
